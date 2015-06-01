@@ -1,9 +1,52 @@
 #include "vec.h"
 #include "guidedfilter.h"
 
+class LaplaMat
+{
+public:
+	LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r);
+	void run(float* Lp, const uchar* p, const float lambda, const size_t r);
+	~LaplaMat();
+private:
+	guided_filter* _gf;
+	uchar* _I_ori;
+	size_t _r;
+	size_t _width;
+	size_t _height;	
+};
+
+LaplaMat::LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r):_r(r), _width(width), _height(height) {
+	_gf = new guided_filter(I_ori, width, height, r, 0.00001);
+	int numPixel = _width * _height;
+	_I_ori = new uchar[numPixel];
+	for(int i = 0; i < numPixel; ++i) {
+		_I_ori[i] = I_ori[i];
+	}
+}
+
+LaplaMat::run(float* Lp, const uchar* p, const float lambda) {
+	int idx, numWinPixel, numPixel;
+	numWinPixel = _r*_r;
+	numPixel = _width * _height;
+	float* tmpI = new float[numPixel];
+	_gf->run(p, tmpI);
+	
+	for(int i = 0; i < numPixel; ++i) {
+			//I-W*I
+			tmpI[i] = (float)_I_ori[i] - tmpI[i];
+			//L = |w|*(I-W)     //L = lamda*L
+			Lp[i] = (float)lambda * (float)numWinPixel * tmpI[i];
+	}
+}
+
+LaplaMat::~LaplaMat() {
+	delete _gf;
+}
+
+
 void propagate( uchar*, uchar*, size_t, size_t, float, size_t, Vec<uchar>& );
 void constructEstimate( uchar*, Vec<float>& );
-void conjgrad( const uchar*, const float*, const Vec<float>&, Vec<float>& );
+void conjgrad(const LaplaMat*, const uchar*, const float*, const Vec<float>&, Vec<float>& );
 void vecFloat2uchar( const Vec<float>&, Vec<uchar>& );
 
 void HFilter(uchar*, const float*, const int, const int );
@@ -16,12 +59,14 @@ void propagate( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float la
     Vec<float> estimate( size ), x( size );
     uchar* Hp = new uchar[size];
     float* Lp = new float[size];
+	LaplaMat* LM = new LaplaMat(image, w, h, radius);
     constructEstimate( estimatedBlur, estimate );
-    conjgrad( Hp, Lp, estimate, x );
+    conjgrad( LM, Hp, Lp, estimate, x );
     vecFloat2uchar( x, result );
 
     delete [] Hp;
     delete [] Lp;
+	delete LM;
 }
 
 void constructEstimate( uchar* estimatedBlur, Vec<float>& estimate )
@@ -32,7 +77,7 @@ void constructEstimate( uchar* estimatedBlur, Vec<float>& estimate )
     }  
 }
 
-void conjgrad( const uchar* H, const float* L, const Vec<float>& estimate, Vec<float>& x, size_t w, size_t h, double lambda,  )
+void conjgrad( const LaplaMat* LM, const uchar* H, const float* L, const Vec<float>& estimate, Vec<float>& x, size_t w, size_t h, double lambda,  )
 {
     cout << "in conjgrad\n";
     size_t size = estimate.getSize();
@@ -44,6 +89,7 @@ void conjgrad( const uchar* H, const float* L, const Vec<float>& estimate, Vec<f
         cout << i << ' ' << rsold << endl;
         HFilter( H, p.getPtr(), h, w );
         lambda_LFilter( L, image, p.getPtr(), h, w, lambda, radius );
+		LM->run(L, p.getPtr(), lambda);
         getAp( Ap.getPtr(), H, L, size );
         alpha = rsold / Vec<float>::dot( p, Ap );
         Vec<float>::add( x, x, p, 1, alpha );
