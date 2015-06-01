@@ -46,7 +46,7 @@ public:
         copy( v._data );
     }
 
-    T& operator[(]( size_t i )
+    T& operator[]( size_t i )
     {
         if( i > _size ){
             std::cerr << "index exceed _size\n";
@@ -76,23 +76,31 @@ public:
         }
         return sum;
     }
-    static void add( Vec& result, const Vec& v1, const Vec& v2 )
+    // result = a1 * v1 + a2 * v2;
+    static void add( Vec& result, const Vec& v1, const Vec& v2, double a1 = 1, double a2 = 1 )
     {
         for( size_t i = 0; i < result._size; ++i ){
-            result[i] = v1[i] + v2[i];
+            result[i] = a1 * v1[i] + a2 * v2[i];
         }
     }
+    // result = v1 .* v2;
     static void multiply( Vec& result, const Vec& v1, const Vec& v2 )
     {
         for( size_t i = 0; i < result._size; ++i ){
             result[i] = v1[i] * v2[i];
         }
     }
+    // result = a * v
     static void scalorMultiply( Vec& result, double a, const Vec& v )
     {
         for( size_t i = 0; i < result._size; ++i ){
             result[i] = a * v[i];
         }
+    }
+
+    size_t getSize() const
+    {
+        return _size;
     }
 
 private:
