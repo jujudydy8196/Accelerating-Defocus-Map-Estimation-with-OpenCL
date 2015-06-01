@@ -1,10 +1,16 @@
-judy: main.o fileIO.o edge.o defocus.o
-	g++ -o judy main.o fileIO.o edge.o defocus.o
-main.o: main.cpp fileIO.h edge.h defocus.h
-	g++ -c main.cpp
+all: judy propagete
+
+propagete: fileIO.o guidedfilter.o
+
+guidedfilter.o: guidedfilter.cpp guidedfilter.h
+	g++ -c -Wall -o guidedfilter.o guidedfilter.cpp
+judy: judy.o fileIO.o edge.o defocus.o
+	g++ -O2 -Wall -o judy judy.o fileIO.o edge.o defocus.o
+judy.o: judy.cpp fileIO.h edge.h defocus.h
+	g++ -c -Wall judy.cpp
 fileIO.o: fileIO.cpp fileIO.h
-	g++ -c fileIO.cpp
+	g++ -c -Wall fileIO.cpp
 edge.o: edge.cpp edge.h
-	g++ -c edge.cpp
+	g++ -c -Wall edge.cpp
 defocus.o: defocus.cpp defocus.h
-	g++ -c defocus.cpp
+	g++ -c -Wall defocus.cpp
