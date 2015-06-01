@@ -1,48 +1,4 @@
 #include "vec.h"
-#include "guidedfilter.h"
-
-class LaplaMat
-{
-public:
-	LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r);
-	void run(float* Lp, const float* p, const float lambda) const;
-	~LaplaMat();
-private:
-	guided_filter* _gf;
-	uchar* _I_ori;
-	size_t _r;
-	size_t _width;
-	size_t _height;	
-};
-
-LaplaMat::LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r):_r(r), _width(width), _height(height) {
-	_gf = new guided_filter(I_ori, width, height, r, 0.00001);
-	int numPixel = _width * _height;
-	_I_ori = new uchar[numPixel];
-	for(int i = 0; i < numPixel; ++i) {
-		_I_ori[i] = I_ori[i];
-	}
-}
-
-void LaplaMat::run(float* Lp, const float* p, const float lambda) const {
-	int numWinPixel, numPixel;
-	numWinPixel = _r*_r;
-	numPixel = _width * _height;
-	float* tmpI = new float[numPixel];
-	_gf->run(p, tmpI);
-	
-	for(int i = 0; i < numPixel; ++i) {
-			//I-W*I
-			tmpI[i] = (float)_I_ori[i] - tmpI[i];
-			//L = |w|*(I-W)     //L = lamda*L
-			Lp[i] = (float)lambda * (float)numWinPixel * tmpI[i];
-	}
-}
-
-LaplaMat::~LaplaMat() {
-	delete _gf;
-}
-
 
 void propagate( uchar*, uchar*, size_t, size_t, float, size_t, Vec<uchar>& );
 void constructEstimate( uchar*, Vec<float>& );
@@ -111,8 +67,8 @@ void vecFloat2uchar( const Vec<float>& F, Vec<uchar>& U )
 
 void HFilter(uchar* Hp, const float* p, const size_t height, const size_t width) {
     int idx = 0;
-    for(int y = 0; y < height; ++y) {
-        for(int x = 0; x < width; ++x) {
+    for(size_t y = 0; y < height; ++y) {
+        for(size_t x = 0; x < width; ++x) {
             idx = y*width + x;
             if((int)p[idx] != 0) { Hp[idx] = 1;}
             else Hp[idx] = 0;

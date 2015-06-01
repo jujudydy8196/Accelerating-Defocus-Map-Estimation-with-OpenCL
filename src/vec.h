@@ -2,6 +2,7 @@
 #define VEC_H
 
 #include <iostream>
+#include "guidedfilter.h"
 
 template <class T>
 class Vec
@@ -119,5 +120,47 @@ private:
     T*      _data;
     size_t  _size;
 };
+
+class LaplaMat
+{
+public:
+    LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r);
+    void run(float* Lp, const float* p, const float lambda) const;
+    ~LaplaMat();
+private:
+    guided_filter* _gf;
+    uchar* _I_ori;
+    size_t _r;
+    size_t _width;
+    size_t _height; 
+};
+
+LaplaMat::LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r):_r(r), _width(width), _height(height) {
+    _gf = new guided_filter(I_ori, width, height, r, 0.00001);
+    int numPixel = _width * _height;
+    _I_ori = new uchar[numPixel];
+    for(int i = 0; i < numPixel; ++i) {
+        _I_ori[i] = I_ori[i];
+    }
+}
+
+void LaplaMat::run(float* Lp, const float* p, const float lambda) const {
+    int numWinPixel, numPixel;
+    numWinPixel = _r*_r;
+    numPixel = _width * _height;
+    float* tmpI = new float[numPixel];
+    _gf->run(p, tmpI);
+    
+    for(int i = 0; i < numPixel; ++i) {
+            //I-W*I
+            tmpI[i] = (float)_I_ori[i] - tmpI[i];
+            //L = |w|*(I-W)     //L = lamda*L
+            Lp[i] = (float)lambda * (float)numWinPixel * tmpI[i];
+    }
+}
+
+LaplaMat::~LaplaMat() {
+    delete _gf;
+}
 
 #endif
