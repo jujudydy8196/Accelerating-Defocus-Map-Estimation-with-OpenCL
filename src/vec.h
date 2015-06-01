@@ -109,6 +109,17 @@ public:
         return _data;
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const Vec& v)
+    {
+        size_t size = v._size;
+        os << "[ ";
+        for( size_t i = 0; i < size; ++i ){
+            os << v._data[i] << ' ';
+        }
+        os << ']';
+        return os;
+    }
+
 private:
     void copy( const T* const data )
     {

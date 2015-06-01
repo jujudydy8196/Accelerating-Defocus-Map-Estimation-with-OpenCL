@@ -15,3 +15,5 @@ edge.o: edge.cpp edge.h
 	g++ -c -Wall edge.cpp
 defocus.o: defocus.cpp defocus.h
 	g++ -c -Wall defocus.cpp
+test_vec: guidedfilter.o test_vec.cpp
+	g++ -O2 -Wall -o test_vec test_vec.cpp guidedfilter.o
