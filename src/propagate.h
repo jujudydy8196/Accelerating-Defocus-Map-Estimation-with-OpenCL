@@ -5,7 +5,7 @@ class LaplaMat
 {
 public:
 	LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r);
-	void run(float* Lp, const uchar* p, const float lambda, const size_t r);
+	void run(float* Lp, const float* p, const float lambda) const;
 	~LaplaMat();
 private:
 	guided_filter* _gf;
@@ -24,8 +24,8 @@ LaplaMat::LaplaMat(const uchar* I_ori, const size_t width, const size_t height, 
 	}
 }
 
-LaplaMat::run(float* Lp, const uchar* p, const float lambda) {
-	int idx, numWinPixel, numPixel;
+void LaplaMat::run(float* Lp, const float* p, const float lambda) const {
+	int numWinPixel, numPixel;
 	numWinPixel = _r*_r;
 	numPixel = _width * _height;
 	float* tmpI = new float[numPixel];
@@ -46,10 +46,10 @@ LaplaMat::~LaplaMat() {
 
 void propagate( uchar*, uchar*, size_t, size_t, float, size_t, Vec<uchar>& );
 void constructEstimate( uchar*, Vec<float>& );
-void conjgrad(const LaplaMat*, const uchar*, const float*, const Vec<float>&, Vec<float>& );
+void conjgrad(const LaplaMat*, uchar*, float*, const Vec<float>&, Vec<float>&, size_t, size_t, float );
 void vecFloat2uchar( const Vec<float>&, Vec<uchar>& );
 
-void HFilter(uchar*, const float*, const int, const int );
+void HFilter(uchar*, const float*, const size_t, const size_t );
 void lambda_LFilter(float*, const uchar*, const float*, const int, const int, const float, const int );
 void getAp(float*, const uchar*, const float*, const int );
 
@@ -61,7 +61,7 @@ void propagate( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float la
     float* Lp = new float[size];
 	LaplaMat* LM = new LaplaMat(image, w, h, radius);
     constructEstimate( estimatedBlur, estimate );
-    conjgrad( LM, Hp, Lp, estimate, x );
+    conjgrad( LM, Hp, Lp, estimate, x, w, h, lambda );
     vecFloat2uchar( x, result );
 
     delete [] Hp;
@@ -77,7 +77,7 @@ void constructEstimate( uchar* estimatedBlur, Vec<float>& estimate )
     }  
 }
 
-void conjgrad( const LaplaMat* LM, const uchar* H, const float* L, const Vec<float>& estimate, Vec<float>& x, size_t w, size_t h, double lambda,  )
+void conjgrad( const LaplaMat* LM, uchar* H, float* L, const Vec<float>& estimate, Vec<float>& x, size_t w, size_t h, float lambda )
 {
     cout << "in conjgrad\n";
     size_t size = estimate.getSize();
@@ -88,7 +88,7 @@ void conjgrad( const LaplaMat* LM, const uchar* H, const float* L, const Vec<flo
         // Ap = A * p
         cout << i << ' ' << rsold << endl;
         HFilter( H, p.getPtr(), h, w );
-        lambda_LFilter( L, image, p.getPtr(), h, w, lambda, radius );
+        // lambda_LFilter( L, image, p.getPtr(), h, w, lambda, radius );
 		LM->run(L, p.getPtr(), lambda);
         getAp( Ap.getPtr(), H, L, size );
         alpha = rsold / Vec<float>::dot( p, Ap );
@@ -109,7 +109,7 @@ void vecFloat2uchar( const Vec<float>& F, Vec<uchar>& U )
     }
 }
 
-void HFilter(uchar* Hp, const uchar* p, const int height, const int width) {
+void HFilter(uchar* Hp, const float* p, const size_t height, const size_t width) {
     int idx = 0;
     for(int y = 0; y < height; ++y) {
         for(int x = 0; x < width; ++x) {
@@ -120,7 +120,7 @@ void HFilter(uchar* Hp, const uchar* p, const int height, const int width) {
     }
 }
 
-void lambda_LFilter(float* Lp, const uchar* I_ori, const uchar* p, const int height, const int width, const float lambda, const int r) {
+void lambda_LFilter(float* Lp, const uchar* I_ori, const float* p, const int height, const int width, const float lambda, const int r) {
     int idx, numWinPixel;
     numWinPixel = r*r;
     float* tmpI = new float[height*width];

@@ -4,7 +4,7 @@
 typedef unsigned char uchar;
 
 // [2*r+1 2*r+1] box filter
-void boxfilter(float* I, float* Out, int width, int height, int r);
+void boxfilter(const float* I, float* Out, int width, int height, int r);
 
 // A 3x3 Matrix
 class Matrix3f
@@ -29,7 +29,7 @@ class guided_filter
 public:
 	guided_filter(const uchar* I_guided, const int width, const int height, const int radius, const float eps);
 	~guided_filter();
-	void run(const uchar* input, float* output);
+	void run(const float* input, float* output);
 	void run_mask(float* input, float* output, uchar* mask);
 private:
 	int _width;

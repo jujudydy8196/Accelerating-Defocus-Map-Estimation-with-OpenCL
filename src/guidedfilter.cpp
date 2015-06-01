@@ -3,7 +3,7 @@
 #include "guidedfilter.h"
 using namespace std;
 
-void boxfilter(float* I, float* Out, int width, int height, int r) {
+void boxfilter(const float* I, float* Out, int width, int height, int r) {
 
 	float* tmp = new float[width*height];
 	
@@ -253,7 +253,7 @@ guided_filter::~guided_filter() {
 	delete [] N;
 }
 
-void guided_filter::run(const uchar* p, float* q) {
+void guided_filter::run(const float* p, float* q) {
 
 	float* mean_p = new float[numPixel];
 	float* buffer1 = new float[numPixel];
