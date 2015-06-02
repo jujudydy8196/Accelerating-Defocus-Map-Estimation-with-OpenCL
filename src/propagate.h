@@ -1,25 +1,25 @@
 #include "vec.h"
 
 void propagate( uchar*, uchar*, size_t, size_t, float, size_t, Vec<uchar>& );
-void constructH( const uchar*, Vec<uchar>& H, const size_t)
+void constructH( const uchar*, Vec<uchar>& H, const size_t);
 void constructEstimate( uchar*, Vec<float>& );
-void conjgrad( const Vec<uchar>&, uchar*,const LaplaMat*, float*, const Vec<float>&, Vec<float>&, size_t, size_t, float );
+void conjgrad( const Vec<uchar>&, float*,const LaplaMat*, float*, const Vec<float>&, Vec<float>&, size_t, size_t, float );
 void vecFloat2uchar( const Vec<float>&, Vec<uchar>& );
 
-void HFilter(uchar* , const float* , const Vec<uchar>& , const size_t);
+void HFilter(float* , const float* , const Vec<uchar>& , const size_t);
 void lambda_LFilter(float*, const uchar*, const float*, const int, const int, const float, const int );
-void getAp(float*, const uchar*, const float*, const int );
+void getAp(float*, const float*, const float*, const int );
 
 void propagate( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<uchar>& result )
 {
     size_t size = w * h;
     Vec<float> estimate( size ), x( size );
 	Vec<uchar> H( size );
-    uchar* Hp = new uchar[size];
+    float* Hp = new float[size];
     float* Lp = new float[size];
 	LaplaMat* LM = new LaplaMat(image, w, h, radius);
     constructEstimate( estimatedBlur, estimate );
-	constructH( estimatedBlur, H);
+	constructH( estimatedBlur, H, size);
     conjgrad( H, Hp, LM, Lp, estimate, x, w, h, lambda );
     vecFloat2uchar( x, result );
 
@@ -43,7 +43,7 @@ void constructEstimate( uchar* estimatedBlur, Vec<float>& estimate )
     }  
 }
 
-void conjgrad(const Vec<uchar>& H, uchar* Hp, const LaplaMat* LM, float* Lp, const Vec<float>& estimate, Vec<float>& x, size_t w, size_t h, float lambda )
+void conjgrad(const Vec<uchar>& H, float* Hp, const LaplaMat* LM, float* Lp, const Vec<float>& estimate, Vec<float>& x, size_t w, size_t h, float lambda )
 {
     cout << "in conjgrad\n";
     size_t size = estimate.getSize();
@@ -53,9 +53,9 @@ void conjgrad(const Vec<uchar>& H, uchar* Hp, const LaplaMat* LM, float* Lp, con
     for( size_t i = 0; i < 1000000; ++i ){
         // Ap = A * p
         cout << i << ' ' << rsold << endl;
-        HFilter( Hp, p.getPtr(), H.getPtr(), size );
+        HFilter( Hp, p.getPtr(), H, size );
         // lambda_LFilter( L, image, p.getPtr(), h, w, lambda, radius );
-		LM->run(L, p.getPtr(), lambda);
+		LM->run(Lp, p.getPtr(), lambda);
         getAp( Ap.getPtr(), Hp, Lp, size );
         alpha = rsold / Vec<float>::dot( p, Ap );
         Vec<float>::add( x, x, p, 1, alpha );
@@ -75,9 +75,9 @@ void vecFloat2uchar( const Vec<float>& F, Vec<uchar>& U )
     }
 }
 
-void HFilter(uchar* Hp, const float* p, const Vec<uchar>& H, const size_t numPixel) {
-	for(int i = 0; i < numPixel; ++i) {
-		if(H[i]) Hp[i] = p;
+void HFilter(float* Hp, const float* p, const Vec<uchar>& H, const size_t numPixel) {
+	for(size_t i = 0; i < numPixel; ++i) {
+		if(H[i]) Hp[i] = p[i];
 		else Hp[i] = 0;
 	}
 }
@@ -102,6 +102,6 @@ void lambda_LFilter(float* Lp, const uchar* I_ori, const float* p, const int hei
 }
 
 //Ap = (H + lamda_L)p = Hp + lamda_L*p
-void getAp(float* Ap, const uchar* Hp, const float* Lp, const int numPixel) {
+void getAp(float* Ap, const float* Hp, const float* Lp, const int numPixel) {
     for(int i = 0; i < numPixel; ++i) Ap[i] = (float)Hp[i] + Lp[i]; 
 }
