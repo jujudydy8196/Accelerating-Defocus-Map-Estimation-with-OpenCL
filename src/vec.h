@@ -168,6 +168,8 @@ void LaplaMat::run(float* Lp, const float* p, const float lambda) const {
             //L = |w|*(I-W)     //L = lamda*L
             Lp[i] = (float)lambda * (float)numWinPixel * tmpI[i];
     }
+
+    delete [] tmpI;
 }
 
 LaplaMat::~LaplaMat() {

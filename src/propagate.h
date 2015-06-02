@@ -99,6 +99,8 @@ void lambda_LFilter(float* Lp, const uchar* I_ori, const float* p, const int hei
             Lp[idx] = (float)lambda * (float)numWinPixel * tmpI[idx];
         }
     }
+
+    delete [] tmpI;
 }
 
 //Ap = (H + lamda_L)p = Hp + lamda_L*p
