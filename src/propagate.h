@@ -6,6 +6,11 @@ void constructEstimate( uchar*, Vec<float>& );
 void conjgrad( const Vec<uchar>&, float*,const LaplaMat*, float*, const Vec<float>&, Vec<float>&, size_t, size_t, float );
 void vecFloat2uchar( const Vec<float>&, Vec<uchar>& );
 
+void propagate2( uchar*, uchar*, size_t, size_t, float, size_t, Vec<uchar>& );
+void vecUchar2float( const Vec<uchar>&, Vec<float>& );
+void constructHE( const uchar*, Vec<float>&, Vec<float>& );
+void constructHE( const Vec<float>&, Vec<float>&, Vec<float>& );
+
 void HFilter(float* , const float* , const Vec<uchar>& , const size_t);
 void lambda_LFilter(float*, const uchar*, const float*, const int, const int, const float, const int );
 void getAp(float*, const float*, const float*, const int );
@@ -71,7 +76,7 @@ void vecFloat2uchar( const Vec<float>& F, Vec<uchar>& U )
 {
     size_t size = F.getSize();
     for( size_t i = 0; i < size; ++i ){
-        U[i] = float( F[i] );
+        U[i] = uchar( F[i] );
     }
 }
 
@@ -106,4 +111,67 @@ void lambda_LFilter(float* Lp, const uchar* I_ori, const float* p, const int hei
 //Ap = (H + lamda_L)p = Hp + lamda_L*p
 void getAp(float* Ap, const float* Hp, const float* Lp, const int numPixel) {
     for(int i = 0; i < numPixel; ++i) Ap[i] = (float)Hp[i] + Lp[i]; 
+}
+
+void propagate2( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<uchar>& result )
+{
+    size_t size = w * h;
+    Vec<float> estimate( size ), H( size ), ones( size );
+    float* Lp = new float[size];
+    LaplaMat* LM = new LaplaMat(image, w, h, radius);
+    constructHE( estimatedBlur, H, estimate );
+
+    for ( size_t i = 0; i < size; ++i )
+    {
+        ones[i] = 1;
+    }
+
+    cout << size << endl;
+    cout << 0 << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, estimate ) << endl;    
+    for( size_t i = 0; i < 15; ++i ){
+        LM->run(H.getPtr(), H.getPtr(), lambda);
+        LM->run(estimate.getPtr(), estimate.getPtr(), lambda);
+        Vec<float>::divide( estimate, estimate, H );
+        constructHE( estimate, H, estimate );
+        cout << i << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, estimate ) << endl;
+    }
+
+    vecFloat2uchar( estimate, result );
+
+    delete [] Lp;
+    delete LM;
+}
+
+void vecFloat2uchar( const Vec<uchar>& U, Vec<float>& F )
+{
+    size_t size = U.getSize();
+    for( size_t i = 0; i < size; ++i ){
+        F[i] = float( U[i] );
+    }
+}
+
+void constructHE( const uchar* input, Vec<float>& H, Vec<float>& E )
+{
+    size_t size = H.getSize();
+    for( size_t i = 0; i < size; ++i ){
+        if( input[i] ){
+            H[i] = 1;
+            E[i] = float( input[i] );
+        }
+    }
+}
+
+void constructHE( const Vec<float>& input, Vec<float>& H, Vec<float>& E )
+{
+    size_t size = H.getSize();
+    for( size_t i = 0; i < size; ++i ){
+        if( input[i] ){
+            H[i] = 1;
+            E[i] = input[i];
+        }
+        else{
+            H[i] = 0;
+            E[i] = input[i];
+        }
+    }
 }

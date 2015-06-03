@@ -29,7 +29,8 @@ int main(int argc, char** argv) {
 	readPPM(I_ori, argv[1]);
 
 	Vec<uchar> result( numPixel );
-	propagate( I_ori, I_sparse, width, height, lambda, r, result );
+	propagate2( I_ori, I_sparse, width, height, lambda, r, result );
+	// propagate( I_ori, I_sparse, width, height, lambda, r, result );
 
 	writePGM(result.getPtr(), width, height, "check_result.pgm");
 	
