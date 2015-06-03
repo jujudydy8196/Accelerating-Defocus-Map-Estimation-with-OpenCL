@@ -6,9 +6,9 @@ typedef unsigned char uchar;
 
 #define VERBOSE 0
 #define BOOSTBLURFACTOR 90.0
-#define NOEDGE 255
+#define NOEDGE 0
 #define POSSIBLE_EDGE 128
-#define EDGE 0
+#define EDGE 255
 
 void canny(uchar *image, int rows, int cols, float sigma,
          float tlow, float thigh, uchar **edge, char *fname);
