@@ -20,7 +20,12 @@ public:
         _data = new T[_size];
         copy( data );
     }
-    Vec( const Vec& v ): Vec( v._data, v._size ) {}
+//    Vec( const Vec& v ): Vec( v._data, v._size ) {}
+    Vec( const Vec& v ) {
+		_size = v._size;
+		_data = new T[_size];
+		copy( v._data );
+	}
     ~Vec() { reset(); }
 
     void reset()
@@ -70,7 +75,8 @@ public:
 
         float sum = 0;
         for( size_t i = 0; i < v1._size; ++i ){
-            sum += v1[i] * v2[i];
+            sum += (float)v1[i] * (float)v2[i];
+//			cout<<"v1 "<<v1[i]<<" "<<"v2 "<<v2[i]<<" sum "<<sum<<" "<<endl;
         }
         return sum;
     }
@@ -136,11 +142,11 @@ class LaplaMat
 {
 public:
     LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r);
-    void run(float* Lp, const float* p, const float lambda) const;
+    void run(float* Lp, const float* p, const float lambda, ofstream& of1, ofstream& of2) const;
     ~LaplaMat();
 private:
     guided_filter* _gf;
-    uchar* _I_ori;
+    float* _I_ori;
     size_t _r;
     size_t _width;
     size_t _height; 
@@ -149,13 +155,13 @@ private:
 LaplaMat::LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r):_r(r), _width(width), _height(height) {
     _gf = new guided_filter(I_ori, width, height, r, 0.00001);
     int numPixel = _width * _height;
-    _I_ori = new uchar[numPixel];
+    _I_ori = new float[numPixel];
     for(int i = 0; i < numPixel; ++i) {
-        _I_ori[i] = I_ori[i];
+        _I_ori[i] = (float)I_ori[i]/255;
     }
 }
 
-void LaplaMat::run(float* Lp, const float* p, const float lambda) const {
+void LaplaMat::run(float* Lp, const float* p, const float lambda, ofstream& of1, ofstream& of2) const {
     int numWinPixel, numPixel;
     numWinPixel = _r*_r;
     numPixel = _width * _height;
@@ -164,9 +170,12 @@ void LaplaMat::run(float* Lp, const float* p, const float lambda) const {
     
     for(int i = 0; i < numPixel; ++i) {
             //I-W*I
-            tmpI[i] = (float)_I_ori[i] - tmpI[i];
+            //tmpI[i] = (float)_I_ori[i] - tmpI[i];
+			tmpI[i] = p[i] - tmpI[i];
+			of1<<tmpI[i]<<" ";
             //L = |w|*(I-W)     //L = lamda*L
             Lp[i] = (float)lambda * (float)numWinPixel * tmpI[i];
+			of2<<Lp[i]<<" ";
     }
 
     delete [] tmpI;
