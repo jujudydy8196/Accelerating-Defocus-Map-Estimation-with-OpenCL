@@ -10,6 +10,7 @@ void propagate2( uchar*, uchar*, size_t, size_t, float, size_t, Vec<uchar>& );
 void vecUchar2float( const Vec<uchar>&, Vec<float>& );
 void constructHE( const uchar*, Vec<float>&, Vec<float>& );
 void constructHE( const Vec<float>&, Vec<float>&, Vec<float>& );
+void checkHE( const Vec<float>&, const Vec<float>& );
 
 void HFilter(float* , const float* , const Vec<uchar>& , const size_t, ofstream&);
 void lambda_LFilter(float*, const uchar*, const float*, const int, const int, const float, const int );
@@ -137,8 +138,7 @@ void propagate2( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float l
 {
     size_t size = w * h;
     Vec<float> estimate( size ), H( size ), ones( size );
-    float* Lp = new float[size];
-    LaplaMat* LM = new LaplaMat(image, w, h, radius);
+    guided_filter gf( image, w, h, radius, 0.00001 );
     constructHE( estimatedBlur, H, estimate );
 
     for ( size_t i = 0; i < size; ++i )
@@ -147,19 +147,19 @@ void propagate2( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float l
     }
 
     cout << size << endl;
+    checkHE( H, estimate );
     cout << 0 << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, estimate ) << endl;    
     for( size_t i = 0; i < 15; ++i ){
-        LM->run(H.getPtr(), H.getPtr(), lambda);
-        LM->run(estimate.getPtr(), estimate.getPtr(), lambda);
+        gf.run(H.getPtr(), H.getPtr());
+        gf.run(estimate.getPtr(), estimate.getPtr());
+        checkHE( H, estimate );
         Vec<float>::divide( estimate, estimate, H );
+        checkHE( H, estimate ); 
         constructHE( estimate, H, estimate );
         cout << i << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, estimate ) << endl;
     }
 
     vecFloat2uchar( estimate, result );
-
-    delete [] Lp;
-    delete LM;
 }
 
 void vecFloat2uchar( const Vec<uchar>& U, Vec<float>& F )
@@ -185,15 +185,27 @@ void constructHE( const Vec<float>& input, Vec<float>& H, Vec<float>& E )
 {
     size_t size = H.getSize();
     for( size_t i = 0; i < size; ++i ){
-        if( input[i] ){
+        if( input[i] > 255 ) E[i] = 255;
+        else if( input[i] < 0 ) E[i] = 0;
+        else E[i] = input[i];
+        if( E[i] ){
             H[i] = 1;
-            E[i] = input[i];
         }
         else{
             H[i] = 0;
-            E[i] = input[i];
         }
     }
+
+    /*
+    for( size_t i = 0; i < size; ++i ){
+        E[i] = input[i];
+        if( E[i] ){
+            H[i] = 1;
+        }
+        else{
+            H[i] = 0;
+        }
+    }*/
 }
 void getAp(float* Ap, const float* Hp, const float* Lp, const int numPixel, const int w,  ofstream& of) {
     for(int i = 0; i < numPixel; ++i) {
@@ -201,4 +213,27 @@ void getAp(float* Ap, const float* Hp, const float* Lp, const int numPixel, cons
 	//	of<<Ap[i]<<" ";
 	//	if((i+1)%w == 0) of<<endl;
 	}
+}
+
+void checkHE( const Vec<float>& H, const Vec<float>& E )
+{
+    size_t size = H.getSize(), HNcount = 0, HBcount = 0, ENcount = 0, EBcount = 0;
+    for( size_t i = 0; i < size; ++i ){
+        if( H[i] > 1 ) ++HBcount;
+        if( H[i] < 0 ) ++HNcount;
+        if( E[i] > 255 ) ++EBcount;
+        if( E[i] < 0 ) ++ENcount;
+    }
+    cout << "HB: " << HBcount << " HN: " << HNcount << " EB: " << EBcount << " EN: " << ENcount << endl;
+
+    float maxH, minH, maxE, minE;
+    maxH = minH = H[0];
+    maxE = minE = E[0];
+    for( size_t i = 1; i < size; ++i ){
+        if( H[i] > maxH ) maxH = H[i];
+        if( H[i] < minH ) minH = H[i];
+        if( E[i] > maxE ) maxE = E[i];
+        if( E[i] < minE ) minE = E[i];
+    }
+    cout << "Hmax: " << maxH << " Hmin: " << minH << " Emax: " << maxE << " Emin: " << minE << endl << endl;
 }

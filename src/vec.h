@@ -98,7 +98,7 @@ public:
     static void divide( Vec& result, const Vec& v1, const Vec& v2 )
     {
         for( size_t i = 0; i < result._size; ++i ){
-            if( v2[i] == 0 ) result[i] = 0;
+            if( v2[i] < 0.01 && v2[i] > -0.01 ) result[i] = 0;
             else result[i] = v1[i] / v2[i];
         }
     }

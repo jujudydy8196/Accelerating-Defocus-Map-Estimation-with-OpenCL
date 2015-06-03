@@ -1,6 +1,6 @@
 all: judy propagate
 
-propagate: fileIO.o guidedfilter.o propagate_blur.o
+propagate: fileIO.o guidedfilter.o propagate_blur.o propagate.h
 	g++ -Wall -O2 -o propagate_blur propagate_blur.o fileIO.o guidedfilter.o
 
 propagate_blur.o:
