@@ -10,6 +10,7 @@ void HFilter(float* , const float* , const Vec<uchar>& , const size_t, ofstream&
 void lambda_LFilter(float*, const uchar*, const float*, const int, const int, const float, const int );
 void getAp(float*, const float*, const float*, const int, const int, ofstream& );
 void printEstimate( const Vec<float>& , const size_t, ofstream&);
+void printP( const Vec<float>& , const size_t, ofstream&); 
 
 void propagate( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<uchar>& result )
 {
@@ -54,23 +55,32 @@ void printEstimate( const Vec<float>& estimate, const size_t size, ofstream& of)
     }  
 	
 }
+
+void printP( const Vec<float>& p, const size_t size, ofstream& of) 
+{
+	for( size_t i = 0; i < size; ++i) {
+		of<<p[i]<<" ";
+	}
+}
+
 void conjgrad(const Vec<uchar>& H, float* Hp, const LaplaMat* LM, float* Lp, const Vec<float>& estimate, Vec<float>& x, size_t w, size_t h, float lambda )
 {
     cout << "in conjgrad\n";
     size_t size = estimate.getSize();
     Vec<float> r( estimate ), p( estimate ), Ap( size );
     float rsold = Vec<float>::dot( r, r ), alpha = 0.0, rsnew = 0.0;
-	ofstream Ap_outfile("check_Ap.txt");
-	ofstream Hp_outfile("check_Hp.txt");
-	ofstream Lp_outfile("check_Lp.txt");
-	ofstream tmp_outfile("check_tmpI.txt");
 	//HFilter( Hp, p.getPtr(), H, size, Hp_outfile );
 	//LM->run(Lp, p.getPtr(), lambda, tmp_outfile, Lp_outfile);
 	//printEstimate( r, size, outfile);
     //getAp( Ap.getPtr(), Hp, Lp, size, w, Ap_outfile );
 	//outfile.close();
-
-    for( size_t i = 0; i < 1000; ++i ){
+	
+    for( size_t i = 0; i <1 ; ++i ){
+		ofstream Ap_outfile("check_Ap.txt");
+		ofstream Hp_outfile("check_Hp.txt");
+		ofstream Lp_outfile("check_Lp.txt");
+		ofstream tmp_outfile("check_tmpI.txt");
+		ofstream p_outfile("check_p.txt");
         // Ap = A * p
         cout << i << ' ' << rsold << endl;
         HFilter( Hp, p.getPtr(), H, size, Hp_outfile );
@@ -81,21 +91,27 @@ void conjgrad(const Vec<uchar>& H, float* Hp, const LaplaMat* LM, float* Lp, con
         Vec<float>::add( x, x, p, 1, alpha );
         Vec<float>::add( r, r, Ap, 1, -alpha );
         rsnew = Vec<float>::dot( r, r );
-        if( rsnew < 1e-20 ) break;
+        if( rsnew < 1e-10 ) break;
+		printP(p, size, p_outfile);
         Vec<float>::add( p, r, p, 1, rsnew/rsold );
         rsold = rsnew;
+		Ap_outfile.close();
+		Hp_outfile.close();
+		Lp_outfile.close();
+		tmp_outfile.close();
+		p_outfile.close();
     }
-	Ap_outfile.close();
-	Hp_outfile.close();
-	Lp_outfile.close();
-	tmp_outfile.close();
 }
 
 void vecFloat2uchar( const Vec<float>& F, Vec<uchar>& U )
 {
     size_t size = F.getSize();
+	float f;
     for( size_t i = 0; i < size; ++i ){
-        U[i] = float( F[i] );
+		f = 255*F[i];
+		if(f>255) U[i] = (uchar)255;
+		else if(f<0) U[i] = (uchar)0;
+		else U[i] = uchar(f);
     }
 }
 
@@ -103,7 +119,7 @@ void HFilter(float* Hp, const float* p, const Vec<uchar>& H, const size_t numPix
 	for(size_t i = 0; i < numPixel; ++i) {
 		if(H[i]) Hp[i] = p[i];
 		else Hp[i] = 0;
-	//	of<<Hp[i]<<" ";
+		//of<<Hp[i]<<" ";
 	}
 }
 
