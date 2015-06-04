@@ -82,6 +82,7 @@ void canny(uchar *image, int rows, int cols, float sigma,
    }
 
    apply_hysteresis(magnitude, nms, rows, cols, tlow, thigh, *edge);
+   
 
    /****************************************************************************
    * Free all of the memory that we allocated except for the edge image that
