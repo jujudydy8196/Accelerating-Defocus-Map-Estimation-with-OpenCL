@@ -30,10 +30,7 @@ int main(int argc, char** argv) {
 
 	Vec<uchar> result( numPixel );
 	propagate( I_ori, I_sparse, width, height, lambda, r, result );
-	ofstream outfile("check_result.txt");
-	for(int i = 0; i< numPixel; ++i) 
-		outfile<<result[i]<<" ";
-	outfile.close();	
+	propagate2( I_ori, I_sparse, width, height, lambda, r, result );
 	writePGM(result.getPtr(), width, height, "check_result.pgm");
 	
 	// system("PAUSE");

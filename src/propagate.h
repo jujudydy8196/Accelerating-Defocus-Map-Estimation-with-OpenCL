@@ -6,6 +6,12 @@ void constructEstimate( uchar*, Vec<float>&, ofstream& );
 void conjgrad( const Vec<uchar>&, float*,const LaplaMat*, float*, const Vec<float>&, Vec<float>&, size_t, size_t, float );
 void vecFloat2uchar( const Vec<float>&, Vec<uchar>& );
 
+void propagate2( uchar*, uchar*, size_t, size_t, float, size_t, Vec<uchar>& );
+void vecUchar2float( const Vec<uchar>&, Vec<float>& );
+void constructHE( const uchar*, Vec<float>&, Vec<float>& );
+void constructHE( const Vec<float>&, Vec<float>&, Vec<float>& );
+void checkHE( const Vec<float>&, const Vec<float>& );
+
 void HFilter(float* , const float* , const Vec<uchar>& , const size_t, ofstream&);
 void lambda_LFilter(float*, const uchar*, const float*, const int, const int, const float, const int );
 void getAp(float*, const float*, const float*, const int, const int, ofstream& );
@@ -74,8 +80,8 @@ void conjgrad(const Vec<uchar>& H, float* Hp, const LaplaMat* LM, float* Lp, con
 	//printEstimate( r, size, outfile);
     //getAp( Ap.getPtr(), Hp, Lp, size, w, Ap_outfile );
 	//outfile.close();
-	
-    for( size_t i = 0; i <1 ; ++i ){
+
+    for( size_t i = 0; i < 1000; ++i ){
 		ofstream Ap_outfile("check_Ap.txt");
 		ofstream Hp_outfile("check_Hp.txt");
 		ofstream Lp_outfile("check_Lp.txt");
@@ -101,6 +107,7 @@ void conjgrad(const Vec<uchar>& H, float* Hp, const LaplaMat* LM, float* Lp, con
 		tmp_outfile.close();
 		p_outfile.close();
     }
+	
 }
 
 void vecFloat2uchar( const Vec<float>& F, Vec<uchar>& U )
@@ -119,7 +126,7 @@ void HFilter(float* Hp, const float* p, const Vec<uchar>& H, const size_t numPix
 	for(size_t i = 0; i < numPixel; ++i) {
 		if(H[i]) Hp[i] = p[i];
 		else Hp[i] = 0;
-		//of<<Hp[i]<<" ";
+	//	of<<Hp[i]<<" ";
 	}
 }
 
@@ -144,6 +151,80 @@ void lambda_LFilter(float* Lp, const uchar* I_ori, const float* p, const int hei
     delete [] tmpI;
 }
 
+void propagate2( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<uchar>& result )
+{
+    size_t size = w * h;
+    Vec<float> estimate( size ), H( size ), ones( size );
+    guided_filter gf( image, w, h, radius, 0.00001 );
+    constructHE( estimatedBlur, H, estimate );
+
+    for ( size_t i = 0; i < size; ++i )
+    {
+        ones[i] = 1;
+    }
+
+    cout << size << endl;
+    checkHE( H, estimate );
+    cout << 0 << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, estimate ) << endl;    
+    for( size_t i = 0; i < 15; ++i ){
+        gf.run(H.getPtr(), H.getPtr());
+        gf.run(estimate.getPtr(), estimate.getPtr());
+        checkHE( H, estimate );
+        Vec<float>::divide( estimate, estimate, H );
+        checkHE( H, estimate ); 
+        constructHE( estimate, H, estimate );
+        cout << i << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, estimate ) << endl;
+    }
+
+    vecFloat2uchar( estimate, result );
+}
+
+void vecFloat2uchar( const Vec<uchar>& U, Vec<float>& F )
+{
+    size_t size = U.getSize();
+    for( size_t i = 0; i < size; ++i ){
+        F[i] = float( U[i] );
+    }
+}
+
+void constructHE( const uchar* input, Vec<float>& H, Vec<float>& E )
+{
+    size_t size = H.getSize();
+    for( size_t i = 0; i < size; ++i ){
+        if( input[i] ){
+            H[i] = 1;
+            E[i] = float( input[i] );
+        }
+    }
+}
+
+void constructHE( const Vec<float>& input, Vec<float>& H, Vec<float>& E )
+{
+    size_t size = H.getSize();
+    for( size_t i = 0; i < size; ++i ){
+        if( input[i] > 255 ) E[i] = 255;
+        else if( input[i] < 0 ) E[i] = 0;
+        else E[i] = input[i];
+        if( E[i] ){
+            H[i] = 1;
+        }
+        else{
+            H[i] = 0;
+        }
+    }
+
+    /*
+    for( size_t i = 0; i < size; ++i ){
+        E[i] = input[i];
+        if( E[i] ){
+            H[i] = 1;
+        }
+        else{
+            H[i] = 0;
+        }
+    }*/
+}
+
 //Ap = (H + lamda_L)p = Hp + lamda_L*p
 void getAp(float* Ap, const float* Hp, const float* Lp, const int numPixel, const int w,  ofstream& of) {
     for(int i = 0; i < numPixel; ++i) {
@@ -151,4 +232,27 @@ void getAp(float* Ap, const float* Hp, const float* Lp, const int numPixel, cons
 	//	of<<Ap[i]<<" ";
 	//	if((i+1)%w == 0) of<<endl;
 	}
+}
+
+void checkHE( const Vec<float>& H, const Vec<float>& E )
+{
+    size_t size = H.getSize(), HNcount = 0, HBcount = 0, ENcount = 0, EBcount = 0;
+    for( size_t i = 0; i < size; ++i ){
+        if( H[i] > 1 ) ++HBcount;
+        if( H[i] < 0 ) ++HNcount;
+        if( E[i] > 255 ) ++EBcount;
+        if( E[i] < 0 ) ++ENcount;
+    }
+    cout << "HB: " << HBcount << " HN: " << HNcount << " EB: " << EBcount << " EN: " << ENcount << endl;
+
+    float maxH, minH, maxE, minE;
+    maxH = minH = H[0];
+    maxE = minE = E[0];
+    for( size_t i = 1; i < size; ++i ){
+        if( H[i] > maxH ) maxH = H[i];
+        if( H[i] < minH ) minH = H[i];
+        if( E[i] > maxE ) maxE = E[i];
+        if( E[i] < minE ) minE = E[i];
+    }
+    cout << "Hmax: " << maxH << " Hmin: " << minH << " Emax: " << maxE << " Emin: " << minE << endl << endl;
 }
