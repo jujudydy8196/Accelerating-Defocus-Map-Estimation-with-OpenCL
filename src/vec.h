@@ -171,11 +171,12 @@ void LaplaMat::run(float* Lp, const float* p, const float lambda, ofstream& of1,
     for(int i = 0; i < numPixel; ++i) {
             //I-W*I
             //tmpI[i] = (float)_I_ori[i] - tmpI[i];
-			tmpI[i] = p[i] - tmpI[i];
 			of1<<tmpI[i]<<" ";
+			tmpI[i] = p[i] - tmpI[i];
+			of2<<tmpI[i]<<" ";
             //L = |w|*(I-W)     //L = lamda*L
             Lp[i] = (float)lambda * (float)numWinPixel * tmpI[i];
-			of2<<Lp[i]<<" ";
+			//of2<<Lp[i]<<" ";
     }
 
     delete [] tmpI;
