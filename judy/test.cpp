@@ -1,15 +1,19 @@
 #include <iostream>
 #include <string>
 #include "fileIO.h"
+#include "defocus.h"
 #include "math.h"
 
-#define pi = 3.14;
+// #define pi = 3.14;
 
 using namespace std;
 
 void g1x(float* g, int* x, int* y, float std, int w);
-void filter(float* gim, int* g , float* I, int width, int height, int w);
+void filter(float* gim, float* g , uchar* I, int width, int height, int w);
 int main(){
+
+
+
 	string name = "test_out.pgm";
 	size_t wt = 20, ht = 50;
 	uchar* testI = new uchar[wt*ht];
@@ -21,48 +25,16 @@ int main(){
 	}
 	writePGM( testI, wt, ht, name );
 
-
-	int w=  1;//(2*ceil(2* 0.5))+1;
-	cout << "w: " << w << endl;
-	int* x1 = new int[(int)pow(2*w+1,2)];
-	int* y1 = new int[(int)pow(2*w+1,2)];
-	cout << "x1: " << endl;
-	for (int r=0; r<2*w+1; r++) {
-		for (int c=0; c<2*w+1; c++) {
-			x1[r*(2*w+1)+c] = -w+c;
-			cout << x1[r*(2*w+1)+c] << " " ;
+	float gim[25];
+	float g[9] = {0,1,2,3,4,5,6,7,8};
+	uchar I[25] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24};
+	filter( gim, g, I, 5, 5, 1 );
+	for( size_t i = 0; i < 5; ++i ){
+		for( size_t j = 0; j < 5; ++j ){
+			cout << gim[i+j*5] << ' ';
 		}
-		cout << endl;		
+		cout << endl;
 	}
-	cout << "y1: " << endl;
-	for (int r=0; r<2*w+1; r++) {
-		for (int c=0; c<2*w+1; c++) {
-			y1[r*w+c] = -w+r;
-			cout << y1[r*w+c] << " " ;
-		}
-		cout << endl;		
-	}
-		cout << endl;		
-
-	float* g = new float[(int)pow(2*w+1,2)];
-	// g1x(g, x1, y1, 0.5, 3);
-	for (int r=0; r<2*w+1; r++) {
-		for (int c=0; c<2*w+1; c++) {
-			g[r*(2*w+1)+c] = r*(2*w+1)+c;
-			cout << g[r*(2*w+1)+c] << " " ;
-		}
-		cout << endl;		
-	}
-		cout << endl;		
-
-	float* gim = new float[(int)pow(2*w+1,2)];
-
-	filter(gim,x1,g,2*w+1,2*w+1,w);
-
-	delete []x1;
-	delete []y1;
-	delete []gim;
-	delete []g;
 
 	// for (int i=0; i<pow(2*w+1,2); i++)
 	// 	free(x1[i]);
@@ -85,29 +57,30 @@ void g1x(float* g, int* x, int* y, float std, int w) {
 // g = -(x./(2*pi*s1sq.^2)) .* exp(-(x.^2 + y.^2)./(2*s1sq)); 
 }
 
-void filter(float* gim, int* g , float* I, int width, int height, int w) {
+void filter(float* gim, float* g , uchar* I, int width, int height, int w) {
 	// cout << " w: " << w << endl;
 	for(int i=0; i<height; i++) {
 		for( int j=0; j<width; j++) {
 			int count=0;
 			float sum=0;
-			for(int y=0; y<2*w+1; y++) {
-				for (int x=0; x<2*w+1; x++) {
+			for(int x=0; x<2*w+1; x++) {
+				for (int y=0; y<2*w+1; y++) {
 					if ((i-w+y)<0 || (i-w+y)>=height)
 						continue;
 					else if((j-w+x)<0 || (j-w+x)>=width)
 						continue;
 					else {
-						sum +=( I[(i-w+y)*width+(j-w+x)] * g[y*(2*w+1)+x]);
+						sum +=( (float)I[(i-w+y)*width+(j-w+x)] * g[y*(2*w+1)+x]);
 						// cout << "x: " << x << " y: " << y << " " << "i: " << i << " j: " << j ;
-						cout << " I: " << I[(i-w+y)*width+(j-w+x)] << " g: " << g[y*(2*w+1)+x]<< " " << endl;
+						// cout << " I: " <<(float)I[(i-w+y)*width+(j-w+x)]/255.0 << " g: " << g[y*(2*w+1)+x]<< " " << endl;
 						// cout << " count: " << count << endl;
 						count++;
 					}
 				}
 			}
-			gim[i*width+j] = sum/count;
-			cout << "r: "<< gim[i*width+j] << endl;
+			gim[i*width+j] = sum;//count;
+			// cout << "r: " << sum << " " << count << " " << sum/count <<" " << 
+			// cout << gim[i*width+j] << " ";
 		}
 		// cout << endl;
 	}

@@ -38,7 +38,7 @@ void sizePGM(int& width, int& height, string filename) {
 }
 
 void readPGM(uchar* I, string filename) {
-	
+	cout << "here\n";
 	char ch;
 	int width, height, tmp;
 	ifstream ifs(filename.c_str(), ios::binary);

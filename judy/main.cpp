@@ -14,14 +14,18 @@ int main(int argc, char** argv) {
 
 	uchar* I = new uchar[width*height];
 	uchar* edge = new uchar[width*height];
-	readPGM(I,"input.pgm");
+	string name = "./input.pgm";
+	readPGM(I,name);
+	cout << "read\n";
 	// for(int h=0; h<height; h++) {
 	// 	for(int w=0; w<width; w++)
 	// 		cout << (float)I[w+h*height]/255.0 << " ";
 	// 	cout << endl;
 	// }
 
-   canny(I, height, width, 1.2, 0.5, 0.8, &edge, "test");
+    name = "test";
+    char str[] = "test";
+   canny(I, height, width, 1.2, 0.5, 0.8, &edge, str);
    writePGM(edge,width,height,"test.pgm");
 
 	// for(int h=0; h<height; h++) {
