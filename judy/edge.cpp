@@ -1,4 +1,6 @@
 #include "edge.h"
+#include <cstdio>
+#include <cstdlib>
 
 void canny(uchar *image, int rows, int cols, float sigma,
          float tlow, float thigh, uchar **edge, char *fname)

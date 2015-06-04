@@ -34,14 +34,14 @@ uchar* defocusEstimation(uchar* I, uchar* edge, float std, float lamda, float ma
 void g1x(float* g, int* x, int* y, float std, int w) {
 	float squareStd = pow(std,2);
 	for (int i=0; i<pow(2*w+1,2); i++)
-		g[i] = -(x[i]/(2*pi*pow(squareStd,2)))* exp(-(pow(x[i],2)+pow(y[i],2))/(2*squareStd));
+		g[i] = -(x[i]/(2*PI*pow(squareStd,2)))* exp(-(pow(x[i],2)+pow(y[i],2))/(2*squareStd));
 // g = -(x./(2*pi*s1sq.^2)) .* exp(-(x.^2 + y.^2)./(2*s1sq)); 
 }
 
 void g1y(float* g, int* x, int* y, float std, int w) {
 	float squareStd = pow(std,2);
 	for (int i=0; i<pow(2*w+1,2); i++)
-		g[i] = -(y[i]/(2*pi*pow(squareStd,2)))* exp(-(pow(x[i],2)+pow(y[i],2))/(2*squareStd));
+		g[i] = -(y[i]/(2*PI*pow(squareStd,2)))* exp(-(pow(x[i],2)+pow(y[i],2))/(2*squareStd));
 // g = -(y./(2*pi*s1sq.^2)) .* exp(-(x.^2 + y.^2)./(2*s1sq)); 
 
 }

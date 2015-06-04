@@ -8,13 +8,13 @@ using namespace std;
 typedef unsigned char uchar;
 
 
-int main() {
+int main(int argc, char** argv) {
 	int width, height;
-	sizePGM(width,height,"/Users/judy/Documents/senior/3DMM/final/judy/input.pgm");
+	sizePGM(width,height,argv[1]);
 
 	uchar* I = new uchar[width*height];
 	uchar* edge = new uchar[width*height];
-	readPGM(I,"/Users/judy/Documents/senior/3DMM/final/judy/input.pgm");
+	readPGM(I,argv[1]);
 	for(int w=0; w<width; w++) {
 		for(int h=0; h<height; h++)
 			cout << (int)I[w+h*width] << " ";
