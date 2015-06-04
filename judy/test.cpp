@@ -1,4 +1,6 @@
 #include <iostream>
+#include <string>
+#include "fileIO.h"
 #include "math.h"
 
 #define pi = 3.14;
@@ -8,6 +10,16 @@ using namespace std;
 void g1x(float* g, int* x, int* y, float std, int w);
 void filter(float* gim, int* g , float* I, int width, int height, int w);
 int main(){
+	string name = "test_out.pgm";
+	size_t wt = 20, ht = 50;
+	uchar* testI = new uchar[wt*ht];
+
+	for( size_t i = 0; i < wt; ++i ){
+		for( size_t j = 0; j < ht; ++j ){
+			testI[j*wt+i] = j*4;
+		}
+	}
+	writePGM( testI, wt, ht, name );
 
 
 	int w=  1;//(2*ceil(2* 0.5))+1;

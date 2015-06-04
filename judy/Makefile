@@ -9,4 +9,7 @@ edge.o: edge.cpp edge.h
 defocus.o: defocus.cpp defocus.h fileIO.h
 	g++ -c defocus.cpp
 clean:
-	rm *.o 
+	rm *.o
+
+test: fileIO.o test.cpp
+	g++ -Wall -o test test.cpp fileIO.o
