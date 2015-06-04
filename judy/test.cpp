@@ -74,27 +74,28 @@ void g1x(float* g, int* x, int* y, float std, int w) {
 }
 
 void filter(float* gim, int* g , float* I, int width, int height, int w) {
-
+	// cout << " w: " << w << endl;
 	for(int i=0; i<height; i++) {
 		for( int j=0; j<width; j++) {
 			int count=0;
 			float sum=0;
-			for(int x=0; x<2*w+1; x++) {
-				for (int y=0; y<2*w+1; y++) {
+			for(int y=0; y<2*w+1; y++) {
+				for (int x=0; x<2*w+1; x++) {
 					if ((i-w+y)<0 || (i-w+y)>=height)
 						continue;
 					else if((j-w+x)<0 || (j-w+x)>=width)
 						continue;
 					else {
 						sum +=( I[(i-w+y)*width+(j-w+x)] * g[y*(2*w+1)+x]);
-						cout << "x: " << x << " y: " << y << " " << "i: " << i << " j: " << j ;
-						cout << " I: " <<I[(i-w+y)*width+(j-w+x)] << " g: " << g[y*(2*w+1)+x]<< " " << endl;
+						// cout << "x: " << x << " y: " << y << " " << "i: " << i << " j: " << j ;
+						cout << " I: " << I[(i-w+y)*width+(j-w+x)] << " g: " << g[y*(2*w+1)+x]<< " " << endl;
+						// cout << " count: " << count << endl;
 						count++;
 					}
 				}
 			}
-			gim[i*width+j] = sum/(float)count;
-			cout << "r: " << gim[j*width+i] << endl;
+			gim[i*width+j] = sum/count;
+			cout << "r: "<< gim[i*width+j] << endl;
 		}
 		// cout << endl;
 	}

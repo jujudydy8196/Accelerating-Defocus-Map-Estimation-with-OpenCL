@@ -39,12 +39,12 @@ uchar* defocusEstimation(uchar* I, uchar* edge, float std, float lamda, float ma
 	float* gimx = new float[width*height];
 	filter(gimx,gx1,I,width,height,w);
     writePGM((uchar*)gimx,width,height,"gimx.pgm");
-	// for (int r=0; r<height; r++) {
-	// 	for (int c=0; c<width; c++) {
-	// 		cout << gimx[r*width+c] << " " ;
-	// 	}
-	// 	cout << endl;
-	// }
+	for (int r=0; r<height; r++) {
+		for (int c=0; c<width; c++) {
+			cout << gimx[r*width+c] << " " ;
+		}
+		cout << endl;
+	}
 	float* gimy = new float[width*height];
 	filter(gimy,gy1,I,width,height,w);
 	float* mg1 = new float[width*height];
@@ -117,6 +117,8 @@ uchar* defocusEstimation(uchar* I, uchar* edge, float std, float lamda, float ma
 		}
 		// cout << endl;
 	}
+    writePGM((uchar*)gRatio,width,height,"gRatio.pgm");
+
 
 	delete []mg1;
 	delete []mg2;
@@ -161,7 +163,7 @@ void g1y(float* g, int* x, int* y, float std, int w) {
 
 
 void filter(float* gim, float* g , uchar* I, int width, int height, int w) {
-
+	// cout << " w: " << w << endl;
 	for(int i=0; i<height; i++) {
 		for( int j=0; j<width; j++) {
 			int count=0;
@@ -173,15 +175,17 @@ void filter(float* gim, float* g , uchar* I, int width, int height, int w) {
 					else if((j-w+x)<0 || (j-w+x)>=width)
 						continue;
 					else {
-						sum +=( I[(i-w+y)*width+(j-w+x)] * g[y*(2*w+1)+x]);
+						sum +=( (float)I[(i-w+y)*width+(j-w+x)] * g[y*(2*w+1)+x]);
 						// cout << "x: " << x << " y: " << y << " " << "i: " << i << " j: " << j ;
-						// cout << " I: " <<I[(i-w+y)*width+(j-w+x)] << " g: " << g[y*(2*w+1)+x]<< " " << endl;
+						// cout << " I: " <<(float)I[(i-w+y)*width+(j-w+x)]/255.0 << " g: " << g[y*(2*w+1)+x]<< " " << endl;
+						// cout << " count: " << count << endl;
 						count++;
 					}
 				}
 			}
-			gim[i*width+j] = sum/(float)count;
-			// cout << "r: " << gim[j*width+i] << endl;
+			gim[i*width+j] = sum/count;
+			// cout << "r: " << sum << " " << count << " " << sum/count <<" " << 
+			// cout << gim[i*width+j] << " ";
 		}
 		// cout << endl;
 	}
