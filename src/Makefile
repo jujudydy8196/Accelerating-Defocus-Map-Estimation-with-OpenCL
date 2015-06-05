@@ -1,5 +1,9 @@
-all: judy propagate
+all: judy propagate defocus_map
 
+defocus_map: fileIO.o guidedfilter.o propagate.h edge.o defocus.o defocus_map.o
+	g++ -Wall -O2 -o defocus_map defocus_map.o fileIO.o guidedfilter.o edge.o defocus.o
+defocus_map.o: defocus_map.cpp
+	g++ -Wall -c -g -o defocus_map.o defocus_map.cpp
 propagate: fileIO.o guidedfilter.o propagate_blur.o propagate.h
 	g++ -Wall -O2 -o propagate_blur propagate_blur.o fileIO.o guidedfilter.o
 

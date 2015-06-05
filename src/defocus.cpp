@@ -1,7 +1,7 @@
 #include "defocus.h"
 #include "fileIO.h"
 
-uchar* defocusEstimation(uchar* I, uchar* edge, float std, float lamda, float maxBlur, int width, int height) {
+void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda, float maxBlur, int width, int height) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
 
 	float std1= std;
@@ -165,11 +165,14 @@ uchar* defocusEstimation(uchar* I, uchar* edge, float std, float lamda, float ma
 	}	
 	sparseScale(sparse,maxBlur,height*width);
 	// imageInfo( sparse, width*height );
-	write( sparse, width, height, "sparse.pgm" );	
-	delete []gRatio;
+	write( sparse, width, height, "sparse.pgm" );
 
-	return (uchar*)sparse;
+	for(size_t i = 0; i < height * width; ++i ){
+		out[i] = uchar( sparse[i] );
+	}
 
+	delete [] gRatio;
+	delete [] sparse;
 }
 void sparseScale(float* I, int maxBlur, size_t size) {
 	float max = I[0];
