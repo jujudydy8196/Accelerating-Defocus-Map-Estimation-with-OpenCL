@@ -147,7 +147,7 @@ uchar* defocusEstimation(uchar* I, uchar* edge, float std, float lamda, float ma
 				// cout << "1: " <<  1.0-pow(gRatio[i*width+j],2) << endl;
 
 				if (gRatio[i*width+j]>1.01){ // && (1.0-pow(gRatio[i*width+j],2))>0 ) {
-					sparse[i*width+j] = sqrt(pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2));
+					sparse[i*width+j] = sqrt((pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2)));
 					// cout << "1: " <<  1.0-pow(gRatio[i*width+j],2) << endl;
 					// cout << "2: " << pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2) << endl;
 					// cout << "3: " << sqrt(pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2)) << endl;
@@ -163,15 +163,25 @@ uchar* defocusEstimation(uchar* I, uchar* edge, float std, float lamda, float ma
 		}
 		// cout << endl;
 	}	
-
+	sparseScale(sparse,maxBlur,height*width);
 	// imageInfo( sparse, width*height );
-	writeDiff( sparse, width, height, "sparse.pgm" );	
+	write( sparse, width, height, "sparse.pgm" );	
 	delete []gRatio;
 
 	return (uchar*)sparse;
 
 }
-
+void sparseScale(float* I, int maxBlur, size_t size) {
+	float max = I[0];
+	for( size_t i = 1; i < size; ++i ){
+		if( I[i] > maxBlur )
+			I[i] = maxBlur;
+		I[i] = I[i] / maxBlur * 255.0;
+	}
+	// cout << "sparsemin: " << double(min) << ", sparsemax: " << double(max) << endl;
+	// for (size_t i = 0 ; i<size; ++i) {
+		// I[i] = I[i] / max * maxBlur;
+}
 void g1x(float* g, int* x, int* y, float std, int w) {
 	float squareStd = pow(std,2);
 	for (int i=0; i<pow(2*w+1,2); i++)
@@ -227,17 +237,17 @@ template <class T>
 void imageInfo( T* I, size_t size )
 {
 	T max = I[0], min = I[0];
-	size_t count[17] = {};
+	// size_t count[17] = {};
 	for( size_t i = 1; i < size; ++i ){
 		if( max < I[i] ) max = I[i];
 		if( min > I[i] ) min = I[i];
 
-		if( size_t( I[i]/10+8 ) > 16 ) cout << I[i] << endl;
-		else ++count[size_t( I[i]/10+8 )];
+		// if( size_t( I[i]/10+8 ) > 16 ) cout << I[i] << endl;
+		// else ++count[size_t( I[i]/10+8 )];
 	}
 	cout << "min: " << double(min) << ", max: " << double(max) << endl;
-	for(size_t i = 0; i < 17; ++i)
-		cout << count[i] << ' ';
+	// for(size_t i = 0; i < 17; ++i)
+		// cout << count[i] << ' ';
 	cout << endl;
 }
 
