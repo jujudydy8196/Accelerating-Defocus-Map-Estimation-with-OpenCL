@@ -49,7 +49,8 @@ void constructEstimate( uchar* estimatedBlur, Vec<float>& estimate, ofstream& of
 {
     size_t size = estimate.getSize();
     for( size_t i = 0; i < size; ++i ){
-        estimate[i] = float( estimatedBlur[i] )/255;
+        //estimate[i] = float( estimatedBlur[i] )/255;
+		estimate[i] = (float)estimatedBlur[i];
 	//	of<<estimate[i]<<" ";
     }  
 }
@@ -115,7 +116,8 @@ void vecFloat2uchar( const Vec<float>& F, Vec<uchar>& U )
     size_t size = F.getSize();
 	float f;
     for( size_t i = 0; i < size; ++i ){
-		f = 255*F[i];
+		//f = 255*F[i];
+		f = F[i];
 		if(f>255) U[i] = (uchar)255;
 		else if(f<0) U[i] = (uchar)0;
 		else U[i] = uchar(f);
@@ -166,7 +168,7 @@ void propagate2( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float l
     cout << size << endl;
     checkHE( H, estimate );
     cout << 0 << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, estimate ) << endl;    
-    for( size_t i = 0; i < 15; ++i ){
+    for( size_t i = 0; i < 500; ++i ){
         gf.run(H.getPtr(), H.getPtr());
         gf.run(estimate.getPtr(), estimate.getPtr());
         checkHE( H, estimate );
@@ -179,13 +181,13 @@ void propagate2( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float l
     vecFloat2uchar( estimate, result );
 }
 
-void vecFloat2uchar( const Vec<uchar>& U, Vec<float>& F )
+/*void vecFloat2uchar( const Vec<uchar>& U, Vec<float>& F )
 {
     size_t size = U.getSize();
     for( size_t i = 0; i < size; ++i ){
         F[i] = float( U[i] );
     }
-}
+}*/
 
 void constructHE( const uchar* input, Vec<float>& H, Vec<float>& E )
 {
