@@ -34,6 +34,14 @@ void InitOpenCL(size_t id)
     LOG(INFO) << "global mem size : " << global_size[0];
     auto local_size = GetLocalMemSize( devices[id] );
     LOG(INFO) << "local mem size : " << local_size[0];
+    auto groupSize = GetGroupSize( devices[id] );
+    LOG(INFO) << "group size : " << groupSize[0];
+    auto workDim = GetWorkItemDim( devices[id] );
+    LOG(INFO) << "work dim : " << workDim[0];
+    auto workSize = GetWorkItemSize( devices[id] );
+    LOG(INFO) << "work size : " << workSize[0] << ' ' << workSize[1] << ' ' << workSize[2];
+    auto computeUnits = GetComputeUnits( devices[id] );
+    LOG(INFO) << "compute units : " << computeUnits[0];
 
     device_manager = new DeviceManager(devices[id]);
 }

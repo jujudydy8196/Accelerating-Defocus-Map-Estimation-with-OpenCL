@@ -101,6 +101,26 @@ vector<cl_ulong> GetLocalMemSize(const cl_device_id did)
 	return OpenclAllocateRoutine<cl_ulong, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_LOCAL_MEM_SIZE, _1, _2, _3), did);
 }
 
+vector<size_t> GetGroupSize(const cl_device_id did)
+{
+	return OpenclAllocateRoutine<size_t, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_MAX_WORK_GROUP_SIZE, _1, _2, _3), did);
+}
+
+vector<cl_uint> GetWorkItemDim(const cl_device_id did)
+{
+	return OpenclAllocateRoutine<cl_uint, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, _1, _2, _3), did);
+}
+
+vector<size_t> GetWorkItemSize(const cl_device_id did)
+{
+	return OpenclAllocateRoutine<size_t, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_MAX_WORK_ITEM_SIZES, _1, _2, _3), did);
+}
+
+vector<cl_uint> GetComputeUnits(const cl_device_id did)
+{
+	return OpenclAllocateRoutine<cl_uint, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_MAX_COMPUTE_UNITS, _1, _2, _3), did);
+}
+
 DeviceManager::DeviceManager(const cl_device_id device): device_(device)
 {
 	cl_int result;

@@ -14,6 +14,10 @@ vector<cl_device_id> GetPlatformDevices(const cl_platform_id pid);
 vector<char> GetDeviceName(const cl_device_id did);
 vector<cl_ulong> GetGlobalMemSize(const cl_device_id did);
 vector<cl_ulong> GetLocalMemSize(const cl_device_id did);
+vector<size_t> GetGroupSize(const cl_device_id did);
+vector<cl_uint> GetWorkItemDim(const cl_device_id did);
+vector<size_t> GetWorkItemSize(const cl_device_id did);
+vector<cl_uint> GetComputeUnits(const cl_device_id did);
 
 typedef unique_ptr<cl_mem, void(*)(cl_mem*)> MemoryObject;
 
