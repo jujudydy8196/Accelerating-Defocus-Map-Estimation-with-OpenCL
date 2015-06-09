@@ -32,6 +32,8 @@ void InitOpenCL(size_t id)
 
     auto global_size = GetGlobalMemSize( devices[id] );
     LOG(INFO) << "global mem size : " << global_size[0];
+    auto global_cache_casize = GetGlobalMemCacheSize( devices[id] );
+    LOG(INFO) << "global mem cache size : " << global_cache_casize[0];
     auto local_size = GetLocalMemSize( devices[id] );
     LOG(INFO) << "local mem size : " << local_size[0];
     auto groupSize = GetGroupSize( devices[id] );

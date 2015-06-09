@@ -96,6 +96,11 @@ vector<cl_ulong> GetGlobalMemSize(const cl_device_id did)
 	return OpenclAllocateRoutine<cl_ulong, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_GLOBAL_MEM_SIZE, _1, _2, _3), did);
 }
 
+vector<cl_ulong> GetGlobalMemCacheSize(const cl_device_id did)
+{
+	return OpenclAllocateRoutine<cl_ulong, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, _1, _2, _3), did);
+}
+
 vector<cl_ulong> GetLocalMemSize(const cl_device_id did)
 {
 	return OpenclAllocateRoutine<cl_ulong, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_LOCAL_MEM_SIZE, _1, _2, _3), did);
