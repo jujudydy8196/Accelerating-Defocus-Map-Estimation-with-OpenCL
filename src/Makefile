@@ -1,5 +1,5 @@
 CXX=g++
-EXES=judy propagate defocus_map test_vec
+EXES=judy propagate defocus_map test_vec cl_test
 
 CFLAGS=-Wall -c -O2 -std=c++11 
 LFLAGS=-lOpenCL -lglog -lgflags
@@ -19,6 +19,9 @@ defocus_map: fileIO.o guidedfilter.o edge.o defocus.o defocus_map.o
 test_vec: guidedfilter.o test_vec.o
 	$(CXX) $? $(LFLAGS) -o $@
 
+cl_test: cl_helper.o cl_test.o
+	$(CXX) $? $(LFLAGS) -o $@
+
 
 %.o: %.cpp %.h
 	$(CXX) $(CFLAGS) $< -o $@
@@ -33,7 +36,10 @@ judy.o: judy.cpp fileIO.h edge.h defocus.h
 	$(CXX) $(CFLAGS) $< -o $@
 
 test_vec.o: test_vec.cpp vec.h
-	g++ -O2 -Wall -o test_vec test_vec.cpp guidedfilter.o
+	$(CXX) $(CFLAGS) $< -o $@
+
+cl_test.o: cl_test.cpp
+	$(CXX) $(CFLAGS) $< -o $@
 
 
 clean:

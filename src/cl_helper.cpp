@@ -91,6 +91,16 @@ vector<char> GetDeviceName(const cl_device_id did)
 	return OpenclAllocateRoutine<char, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_NAME, _1, _2, _3), did);
 }
 
+vector<cl_ulong> GetGlobalMemSize(const cl_device_id did)
+{
+	return OpenclAllocateRoutine<cl_ulong, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_GLOBAL_MEM_SIZE, _1, _2, _3), did);
+}
+
+vector<cl_ulong> GetLocalMemSize(const cl_device_id did)
+{
+	return OpenclAllocateRoutine<cl_ulong, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_LOCAL_MEM_SIZE, _1, _2, _3), did);
+}
+
 DeviceManager::DeviceManager(const cl_device_id device): device_(device)
 {
 	cl_int result;
