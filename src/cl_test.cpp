@@ -48,12 +48,70 @@ void InitOpenCL(size_t id)
     device_manager = new DeviceManager(devices[id]);
 }
 
+void test()
+{
+    device_manager->GetKernel("cl/test1.cl", "test1");
+    device_manager->GetKernel("cl/test2.cl", "test2");
+    device_manager->GetKernel("cl/test3.cl", "test3");
+    device_manager->GetKernel("cl/test3.cl", "test4");
+    device_manager->GetKernel("cl/test3.cl", "test4");
+
+    int a[10] = {};
+    const size_t block_dim[1] = { 100 };
+    size_t grid_dim[1] = { 100 };
+
+    cl_kernel kernel = device_manager->GetKernel("cl/test1.cl", "test1");
+    auto d_out = device_manager->AllocateMemory(CL_MEM_READ_WRITE, 10*sizeof(int));
+    vector<pair<const void*, size_t>> arg_and_sizes;
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_out.get(), sizeof(cl_mem) ) );
+    device_manager->Call( kernel, arg_and_sizes, 1, grid_dim, NULL, block_dim );
+
+    LOG(INFO) << "after";
+    for(size_t i = 0; i < 10; ++i){
+        LOG(INFO) << a[i];
+    }
+
+    device_manager->ReadMemory(a, *d_out.get(), 10*sizeof(int));
+    LOG(INFO) << "after";
+    for(size_t i = 0; i < 10; ++i){
+        LOG(INFO) << a[i];
+    }
+
+    kernel = device_manager->GetKernel("cl/test2.cl", "test2");
+    device_manager->Call( kernel, arg_and_sizes, 1, grid_dim, NULL, block_dim );
+
+    device_manager->ReadMemory(a, *d_out.get(), 10*sizeof(int));
+    LOG(INFO) << "after";
+    for(size_t i = 0; i < 10; ++i){
+        LOG(INFO) << a[i];
+    }
+
+    kernel = device_manager->GetKernel("cl/test3.cl", "test3");
+    device_manager->Call( kernel, arg_and_sizes, 1, grid_dim, NULL, block_dim );
+
+    device_manager->ReadMemory(a, *d_out.get(), 10*sizeof(int));
+    LOG(INFO) << "after";
+    for(size_t i = 0; i < 10; ++i){
+        LOG(INFO) << a[i];
+    }
+
+    kernel = device_manager->GetKernel("cl/test3.cl", "test4");
+    device_manager->Call( kernel, arg_and_sizes, 1, grid_dim, NULL, block_dim );
+
+    device_manager->ReadMemory(a, *d_out.get(), 10*sizeof(int));
+    LOG(INFO) << "after";
+    for(size_t i = 0; i < 10; ++i){
+        LOG(INFO) << a[i];
+    }
+}
+
 int main( int argc, char** argv )
 {
     InitGoogleLogging(argv[0]);
     FLAGS_logtostderr = true;
     InitOpenCL(0);
 
+    test();
 
     return 0;
 }

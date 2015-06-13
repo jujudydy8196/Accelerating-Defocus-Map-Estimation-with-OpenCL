@@ -8,19 +8,19 @@ all: $(EXES)
 
 
 judy: judy.o fileIO.o edge.o defocus.o
-	$(CXX) $? $(LFLAGS) -o $@
+	$(CXX) $^ $(LFLAGS) -o $@
 
 propagate_blur: fileIO.o guidedfilter.o propagate_blur.o
 	$(CXX) $? $(LFLAGS) -o $@
 
 defocus_map: fileIO.o guidedfilter.o edge.o defocus.o defocus_map.o
-	$(CXX) $? $(LFLAGS) -o $@
+	$(CXX) $^ $(LFLAGS) -o $@
 
 test_vec: guidedfilter.o test_vec.o
-	$(CXX) $? $(LFLAGS) -o $@
+	$(CXX) $^ $(LFLAGS) -o $@
 
-cl_test: cl_helper.o cl_test.o
-	$(CXX) $? $(LFLAGS) -o $@
+cl_test: cl_test.o cl_helper.o 
+	$(CXX) $^ $(LFLAGS) -o $@
 
 
 %.o: %.cpp %.h
