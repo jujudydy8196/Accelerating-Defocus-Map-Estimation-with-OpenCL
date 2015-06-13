@@ -53,6 +53,8 @@ void test()
     device_manager->GetKernel("cl/test1.cl", "test1");
     device_manager->GetKernel("cl/test2.cl", "test2");
     device_manager->GetKernel("cl/test3.cl", "test3");
+    device_manager->GetKernel("cl/test3.cl", "test4");
+    device_manager->GetKernel("cl/test3.cl", "test4");
 
     int a[10] = {};
     const size_t block_dim[1] = { 100 };
@@ -93,6 +95,7 @@ void test()
         LOG(INFO) << a[i];
     }
 
+    kernel = device_manager->GetKernel("cl/test3.cl", "test4");
     device_manager->Call( kernel, arg_and_sizes, 1, grid_dim, NULL, block_dim );
 
     device_manager->ReadMemory(a, *d_out.get(), 10*sizeof(int));

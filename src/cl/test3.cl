@@ -6,3 +6,10 @@ __kernel void test3(
     out[id] = out[id]-1;
 }
 
+__kernel void test4(
+    __global int *out
+)
+{
+    test3(out);
+}
+
