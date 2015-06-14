@@ -105,6 +105,16 @@ void test()
     }
 }
 
+void testVec()
+{
+    // device_manager->GetKernel("vec.cl", "dot");
+    // device_manager->GetKernel("vec.cl", "copy");
+    // device_manager->GetKernel("vec.cl", "add");
+    // device_manager->GetKernel("vec.cl", "multiply");
+    // device_manager->GetKernel("vec.cl", "divide");
+    device_manager->GetKernel("vec.cl", "scalorMultiply");
+}
+
 int main( int argc, char** argv )
 {
     InitGoogleLogging(argv[0]);
@@ -112,6 +122,7 @@ int main( int argc, char** argv )
     InitOpenCL(0);
 
     test();
+    testVec();
 
     return 0;
 }
