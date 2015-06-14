@@ -107,12 +107,60 @@ void test()
 
 void testVec()
 {
-    // device_manager->GetKernel("vec.cl", "dot");
-    // device_manager->GetKernel("vec.cl", "copy");
-    // device_manager->GetKernel("vec.cl", "add");
-    // device_manager->GetKernel("vec.cl", "multiply");
-    // device_manager->GetKernel("vec.cl", "divide");
-    device_manager->GetKernel("vec.cl", "scalorMultiply");
+    // device_manager->GetKernel("vec_tmp.cl", "dot");
+    device_manager->GetKernel("vec.cl", "vecDot");
+    device_manager->GetKernel("vec.cl", "vecCopy");
+    device_manager->GetKernel("vec.cl", "vecAdd");
+    device_manager->GetKernel("vec.cl", "vecMultiply");
+    device_manager->GetKernel("vec.cl", "vecDivide");
+    device_manager->GetKernel("vec.cl", "vecScalorMultiply");
+
+    int size = 5;
+    float a1 = 1, a2 = 1;
+    float a[5] = { 1.0, 2.0, 4.0, 4.0, 5.0 };
+    float b[5] = { 2.0, 2.5, 1.0, 4.0, 2.0 };
+    float c[5] = {};
+    float sum = 0;
+    const size_t block_dim[1] = { 100 };
+    size_t grid_dim[1] = { 100 };
+
+    cl_kernel kernel = device_manager->GetKernel("vec.cl", "vecDot");
+    auto d_v1 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, 5*sizeof(float));
+    auto d_v2 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, 5*sizeof(float));
+    auto d_result = device_manager->AllocateMemory(CL_MEM_READ_WRITE, 5*sizeof(float));
+    auto d_sum = device_manager->AllocateMemory(CL_MEM_READ_WRITE, sizeof(float));
+    device_manager->WriteMemory(a, *d_v1.get(), 5*sizeof(float));
+    device_manager->WriteMemory(b, *d_v2.get(), 5*sizeof(float));
+
+    vector<pair <const void*, size_t> > arg_and_sizes;
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_sum.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_v1.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_v2.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes, 1, grid_dim, NULL, block_dim );
+
+    device_manager->ReadMemory(&sum, *d_sum.get(), sizeof(float));
+    LOG(INFO) << "dot";
+    LOG(INFO) << sum;    
+    for(size_t i = 0; i < size; ++i){
+        LOG(INFO) << c[i];
+    }
+
+    kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
+    vector<pair <const void*, size_t> > arg_and_sizes_add;
+    arg_and_sizes_add.push_back( pair<const void*, size_t>( d_result.get(), sizeof(cl_mem) ) );
+    arg_and_sizes_add.push_back( pair<const void*, size_t>( d_v1.get(), sizeof(cl_mem) ) );
+    arg_and_sizes_add.push_back( pair<const void*, size_t>( d_v2.get(), sizeof(cl_mem) ) );
+    // arg_and_sizes_add.push_back( pair<const void*, size_t>( &a1, sizeof(float) ) );
+    // arg_and_sizes_add.push_back( pair<const void*, size_t>( &a2, sizeof(float) ) );
+    arg_and_sizes_add.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes_add, 1, grid_dim, NULL, block_dim );
+
+    device_manager->ReadMemory(c, *d_result.get(), size*sizeof(float));
+    LOG(INFO) << "add";
+    for(size_t i = 0; i < size; ++i){
+        LOG(INFO) << c[i];
+    }
 }
 
 int main( int argc, char** argv )
@@ -121,7 +169,7 @@ int main( int argc, char** argv )
     FLAGS_logtostderr = true;
     InitOpenCL(0);
 
-    test();
+    //test();
     testVec();
 
     return 0;

@@ -1,23 +1,24 @@
 // a = v1 dot v2
-__kernel void dot(
-    __global float a,
+__kernel void vecDot(
+    __global float *a,
     __global const float *v1,
     __global const float *v2,
-    __global int size
+    const int size
 )
 {
     int id = get_global_id(0);
 
     if( id < size ){
-        a += v1[id] * v2[id];
+        if( id == 0 ) *a = v1[id] * v2[id];
+        else *a += v1[id] * v2[id];
     }
 }
 
 // v1 copy to v2
-__kernel void copy(
+__kernel void vecCopy(
     __global const float *v1,
     __global float *v2,
-    __global int size
+    const int size
 )
 {
     int id = get_global_id(0);
@@ -28,13 +29,13 @@ __kernel void copy(
 }
 
 // result = a1 * v1 + a2 * v2;
-__kernel void add(
+__kernel void vecAdd(
     __global float *result,
     __global const float *v1,
     __global const float *v2,
-    __global const float a1,
-    __global const float a2,
-    __global int size
+    const float a1,
+    const float a2,
+    const int size
 )
 {
     int id = get_global_id(0);
@@ -45,11 +46,11 @@ __kernel void add(
 }
 
 // result = v1 .* v2;
-__kernel void multiply(
+__kernel void vecMultiply(
     __global float *result,
     __global const float *v1,
     __global const float *v2,
-    __global int size
+    const int size
 )
 {
     int id = get_global_id(0);
@@ -60,11 +61,11 @@ __kernel void multiply(
 }
 
 // result = v1 ./ v2;
-__kernel void divide(
+__kernel void vecDivide(
     __global float *result,
     __global const float *v1,
     __global const float *v2,
-    __global int size
+    const int size
 )
 {
     int id = get_global_id(0);
@@ -75,16 +76,16 @@ __kernel void divide(
 }
 
 // result = a * v;
-__kernel void divide(
+__kernel void vecScalorMultiply(
     __global float *result,
     __global const float *v,
-    __global const float a,
-    __global int size
+    const float a,
+    const int size
 )
 {
     int id = get_global_id(0);
 
     if( id < size ){
-        result[id] = v1[id] * a;
+        result[id] = v[id] * a;
     }
 }
