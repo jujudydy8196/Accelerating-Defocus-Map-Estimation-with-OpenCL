@@ -1,17 +1,29 @@
-// a = v1 dot v2
-__kernel void vecDot(
-    __global float *a,
-    __global const float *v1,
-    __global const float *v2,
+// sum array for each block
+__kernel void vecSum(
+    __global float *result,
+    __global const float *v,
+    __local float *buffer,
     const int size
 )
 {
-    int id = get_global_id(0);
+    size_t gid = get_global_id(0);
+    size_t lid = get_local_id(0);
+    size_t lSize = get_local_size(0);
 
-    if( id < size ){
-        if( id == 0 ) *a = v1[id] * v2[id];
-        else *a += v1[id] * v2[id];
+    if( gid < size ){
+        buffer[lid] = v[gid];
     }
+    else{
+        buffer[lid] = 0;
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    for( int offset = get_local_size(0) / 2; offset > 0; offset >>= 1 ){
+        if( lid < offset ) buffer[lid] += buffer[lid+offset];
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+
+    if( lid == 0 ) result[get_group_id(0)] = buffer[0];
 }
 
 // v1 copy to v2
@@ -21,7 +33,8 @@ __kernel void vecCopy(
     const int size
 )
 {
-    int id = get_global_id(0);
+    size_t id = get_global_id(0);
+    size_t gSize = get_global_size(0);
 
     if( id < size ){
         v2[id] = v1[id];
@@ -38,7 +51,8 @@ __kernel void vecAdd(
     const int size
 )
 {
-    int id = get_global_id(0);
+    size_t id = get_global_id(0);
+    size_t gSize = get_global_size(0);
 
     if( id < size ){
         result[id] = a1 * v1[id] + a2 * v2[id];
@@ -53,7 +67,8 @@ __kernel void vecMultiply(
     const int size
 )
 {
-    int id = get_global_id(0);
+    size_t id = get_global_id(0);
+    size_t gSize = get_global_size(0);
 
     if( id < size ){
         result[id] = v1[id] * v2[id];
@@ -68,7 +83,8 @@ __kernel void vecDivide(
     const int size
 )
 {
-    int id = get_global_id(0);
+    size_t id = get_global_id(0);
+    size_t gSize = get_global_size(0);
 
     if( id < size ){
         result[id] = v1[id] / v2[id];
@@ -83,9 +99,24 @@ __kernel void vecScalorMultiply(
     const int size
 )
 {
-    int id = get_global_id(0);
+    size_t id = get_global_id(0);
+    size_t gSize = get_global_size(0);
 
     if( id < size ){
         result[id] = v[id] * a;
+    }
+}
+
+__kernel void vecTest(
+    __global float *result,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+    size_t gSize = get_global_size(0);
+    size_t tmp = get_group_id(0);
+
+    if( id < size ){
+        result[id] = tmp;
     }
 }
