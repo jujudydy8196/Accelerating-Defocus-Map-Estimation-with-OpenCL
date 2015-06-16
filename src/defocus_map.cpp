@@ -41,7 +41,12 @@ int main(int argc, char** argv) {
     I_out = new uchar[numPixel];
     readPPM(I_ori_uchar, argv[1]);
     imageUchar2Float( I_ori_uchar, I_ori, n );
-    imageGray( I_ori, I_gray, numPixel );
+
+    // readPGM(I_ori_uchar, "./sparse.pgm"); 
+    // imageUchar2Float( I_ori_uchar, I_sparse, numPixel );
+    // imageFloat2Uchar( I_sparse, I_out, numPixel );
+
+    // imageGray( I_ori, I_gray, numPixel );
     // readPGM(I_gray, argv[2]);
 
     // find sparse defocus map
@@ -74,7 +79,7 @@ void imageUchar2Float( uchar* uImage, float* fImage, const int size )
 void imageFloat2Uchar( float* fImage, uchar* uImage, const int size )
 {
     for( size_t i = 0; i < size; ++i ){
-        uImage[i] = fImage[i] * 255.0;
+        uImage[i] = uchar(fImage[i] * 255.0);
     }
 }
 
