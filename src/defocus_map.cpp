@@ -13,11 +13,12 @@ int main(int argc, char** argv) {
         cout << "Usage: defocus_map <original image> <gray image> <full depth image> <lambda> <radius> <gradient_descent[1] / filtering[2]>" << endl;
         return -1;
     }
-    
-    uchar* I_sparse = NULL;
-    uchar* I_ori = NULL;
-    uchar* I_gray = NULL;
-    uchar* I_edge = NULL;
+
+    uchar* I_ori_uchar = NULL;
+    float* I_sparse = NULL;
+    float* I_ori = NULL;
+    float* I_gray = NULL;
+    float* I_edge = NULL;
     int width, height, numPixel, r, mode;
     float lambda;
 
@@ -27,12 +28,15 @@ int main(int argc, char** argv) {
     mode = atoi(argv[6]);
     numPixel = width*height;
     int n = numPixel * 3;
-    I_sparse = new uchar[numPixel];
-    I_gray = new uchar[numPixel];
-    I_edge = new uchar[numPixel];
-    I_ori = new uchar[n];
-    readPPM(I_ori, argv[1]);
-    readPGM(I_gray, argv[2]);
+    I_sparse = new float[numPixel];
+    I_gray = new float[numPixel];
+    I_edge = new float[numPixel];
+    I_ori = new float[n];
+    I_ori_uchar = new uchar[n];
+    readPPM(I_ori_uchar, argv[1]);
+    imageUchar2Float( I_ori_uchar, I_ori, n );
+    imageGray( I_ori, I_gray, numPixel );
+    // readPGM(I_gray, argv[2]);
 
     // find sparse defocus map
     canny(I_gray, height, width, 1.2, 0.5, 0.8, &I_edge, "test");
@@ -49,4 +53,17 @@ int main(int argc, char** argv) {
     delete [] I_edge;
     delete [] I_sparse;
     return 0;
+}
+
+void imageUchar2Float( uchar* uImage, float* fImage, const int size )
+{
+    for( size_t i = 0; i < size; ++i ){
+        fImage[i] = uImage[i] / 255.0f;
+    }
+}
+
+void imageGray( float* image, float* gray, int size ){
+    for( size_t i = 0; i < size; ++i ){
+        gray[i] = 0.2126*image[3*i] + 0.7152*image[3*i+1] + 0.0722*image[3*i+2];
+    }
 }
