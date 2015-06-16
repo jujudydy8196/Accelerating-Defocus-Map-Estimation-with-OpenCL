@@ -207,6 +207,7 @@ void write( const float* I, size_t w, size_t h, char* str )
 	uchar* out = new uchar[size];
 	for (size_t i = 0; i < size; ++i)
 	{
+		// cout << I[i] << endl;
 		out[i] = uchar((I[i]));//uchar( I[i]/270*128 + 128 );
 	}
     writePGM(out,w,h,str);

@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     // imageUchar2Float( I_ori_uchar, I_sparse, numPixel );
     // imageFloat2Uchar( I_sparse, I_out, numPixel );
 
-    // imageGray( I_ori, I_gray, numPixel );
+    imageGray( I_ori, I_gray, numPixel );
     // readPGM(I_gray, argv[2]);
 
     // find sparse defocus map

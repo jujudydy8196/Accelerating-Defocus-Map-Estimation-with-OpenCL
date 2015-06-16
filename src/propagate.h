@@ -21,6 +21,12 @@ void printP( const Vec<float>& , const size_t, ofstream&);
 void propagate( float* image, float* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<float>& result )
 {
     size_t size = w * h;
+
+    for(size_t i = 0; i < size; ++i){
+        cout << estimatedBlur[i] << ' ';
+    }
+    cout << endl;
+
     Vec<float> estimate( size );//, x( size );
 	Vec<float> H( size );
     float* Hp = new float[size];
