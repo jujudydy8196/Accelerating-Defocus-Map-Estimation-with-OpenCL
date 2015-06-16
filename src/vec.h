@@ -160,12 +160,12 @@ private:
     size_t _height; 
 };
 
-LaplaMat::LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r):_r(r), _width(width), _height(height) {
+LaplaMat::LaplaMat(const float* I_ori, const size_t width, const size_t height, const size_t r):_r(r), _width(width), _height(height) {
     _gf = new guided_filter(I_ori, width, height, r, 0.00001);
     int numPixel = _width * _height;
     _I_ori = new float[numPixel];
     for(int i = 0; i < numPixel; ++i) {
-        _I_ori[i] = (float)I_ori[i]/255;
+        _I_ori[i] = I_ori[i];
     }
 }
 

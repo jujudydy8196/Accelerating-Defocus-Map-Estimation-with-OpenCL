@@ -27,7 +27,7 @@ Matrix3f invMat3(Matrix3f& A);
 class guided_filter
 {
 public:
-	guided_filter(const uchar* I_guided, const int width, const int height, const int radius, const float eps);
+	guided_filter(const float* I_guided, const int width, const int height, const int radius, const float eps);
 	~guided_filter();
 	void run(const float* input, float* output);
 	void run_mask(float* input, float* output, uchar* mask);

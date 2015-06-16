@@ -108,9 +108,9 @@ void test()
 void testVec()
 {
     // device_manager->GetKernel("vec_tmp.cl", "dot");
-    device_manager->GetKernel("vec.cl", "vecDot");
+    device_manager->GetKernel("vec.cl", "vecSum");
     device_manager->GetKernel("vec.cl", "vecCopy");
-    device_manager->GetKernel("vec.cl", "vecAdd");
+    device_manager->GetKernel("vec.cl", "vecScalarAdd");
     device_manager->GetKernel("vec.cl", "vecMultiply");
     device_manager->GetKernel("vec.cl", "vecDivide");
     device_manager->GetKernel("vec.cl", "vecScalorMultiply");

@@ -165,7 +165,7 @@ Matrix3f invMat3(Matrix3f& A) {
 }
 
 
-guided_filter::guided_filter(const uchar* I_guided, const int width, const int height, const int radius, const float eps) {
+guided_filter::guided_filter(const float* I_guided, const int width, const int height, const int radius, const float eps) {
 	
 	numPixel = width*height;
 	_width = width;
@@ -189,9 +189,9 @@ guided_filter::guided_filter(const uchar* I_guided, const int width, const int h
 	float* var_I_bb = new float[numPixel];
 
 	for(int i = 0; i < numPixel; ++i) {
-		Ir[i] = float(I_guided[3*i  ])/255.f;
-		Ig[i] = float(I_guided[3*i+1])/255.f;
-		Ib[i] = float(I_guided[3*i+2])/255.f;
+		Ir[i] = (I_guided[3*i  ]);
+		Ig[i] = (I_guided[3*i+1]);
+		Ib[i] = (I_guided[3*i+2]);
 		tmp[i] = 1;
 	}
 

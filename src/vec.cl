@@ -42,7 +42,7 @@ __kernel void vecCopy(
 }
 
 // result = a1 * v1 + a2 * v2;
-__kernel void vecAdd(
+__kernel void vecScalarAdd(
     __global float *result,
     __global const float *v1,
     __global const float *v2,
@@ -52,10 +52,24 @@ __kernel void vecAdd(
 )
 {
     size_t id = get_global_id(0);
-    size_t gSize = get_global_size(0);
 
     if( id < size ){
         result[id] = a1 * v1[id] + a2 * v2[id];
+    }
+}
+
+// result = v1 + v2;
+__kernel void vecAdd(
+    __global float *result,
+    __global const float *v1,
+    __global const float *v2,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+
+    if( id < size ){
+        result[id] = v1[id] + v2[id];
     }
 }
 
@@ -92,7 +106,7 @@ __kernel void vecDivide(
 }
 
 // result = a * v;
-__kernel void vecScalorMultiply(
+__kernel void vecScalarMultiply(
     __global float *result,
     __global const float *v,
     const float a,
