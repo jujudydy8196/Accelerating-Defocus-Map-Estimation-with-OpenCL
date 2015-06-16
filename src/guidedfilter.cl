@@ -18,7 +18,7 @@ __kernel void boxfilter(
         if( y < 0 || y >= height ) continue;
         for( int dx = -r; dx <= r; ++dx ){
             int x = gx + dx;
-            if( x < o || x >= width ) continue;
+            if( x < 0 || x >= width ) continue;
             sum += image[y*width+x];
             ++count;
         }
@@ -61,26 +61,26 @@ __kernel void guidedFilterInvMat(
     size_t id = get_global_id(0);
 
     if( id < size ){
-        float a11 = varRR - meanR * meanR + eps;
-        float a12 = varRG - meanR * meanG;
-        float a13 = varRB - meanR * meanB;
+        float a11 = varRR[id] - meanR[id] * meanR[id] + eps;
+        float a12 = varRG[id] - meanR[id] * meanG[id];
+        float a13 = varRB[id] - meanR[id] * meanB[id];
         float a21 = a12;
-        float a22 = varGG - meanG * meanG + eps;
-        float a23 = varGB - meanG * meanB;
+        float a22 = varGG[id] - meanG[id] * meanG[id] + eps;
+        float a23 = varGB[id] - meanG[id] * meanB[id];
         float a31 = a13;
         float a32 = a23;
-        float a33 = varBB - meanB * meanB + eps;
+        float a33 = varBB[id] - meanB[id] * meanB[id] + eps;
 
-        float a22a33_a23a32 = A.a22*A.a33 - A.a23*A.a32;
-        float a13a32_a12a33 = A.a13*A.a32 - A.a12*A.a33;
-        float a12a23_a13a22 = A.a12*A.a23 - A.a13*A.a22;
-        float a23a31_a21a33 = A.a23*A.a31 - A.a21*A.a33;
-        float a11a33_a13a31 = A.a11*A.a33 - A.a13*A.a31;
-        float a13a21_a11a23 = A.a13*A.a21 - A.a11*A.a23;
-        float a21a32_a22a31 = A.a21*A.a32 - A.a22*A.a31;
-        float a12a31_a11a32 = A.a12*A.a31 - A.a11*A.a32;
-        float a11a22_a12a21 = A.a11*A.a22 - A.a12*A.a21;
-        float detA = A.a11*a22a33_a23a32 + A.a12*a23a31_a21a33 + A.a13*a21a32_a22a31;
+        float a22a33_a23a32 = a22*a33 - a23*a32;
+        float a13a32_a12a33 = a13*a32 - a12*a33;
+        float a12a23_a13a22 = a12*a23 - a13*a22;
+        float a23a31_a21a33 = a23*a31 - a21*a33;
+        float a11a33_a13a31 = a11*a33 - a13*a31;
+        float a13a21_a11a23 = a13*a21 - a11*a23;
+        float a21a32_a22a31 = a21*a32 - a22*a31;
+        float a12a31_a11a32 = a12*a31 - a11*a32;
+        float a11a22_a12a21 = a11*a22 - a12*a21;
+        float detA = a11*a22a33_a23a32 + a12*a23a31_a21a33 + a13*a21a32_a22a31;
         detA = 1.f/detA;
     
         invSigma[9*id  ] = a22a33_a23a32*detA;

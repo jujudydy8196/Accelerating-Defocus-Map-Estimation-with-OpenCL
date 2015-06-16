@@ -2,6 +2,7 @@
 #include <gflags/gflags.h>
 #include <CL/cl.h>
 #include "cl_helper.h"
+#include "propagatecl.h"
 using namespace google;
 
 DeviceManager *device_manager;
@@ -184,7 +185,8 @@ int main( int argc, char** argv )
     InitOpenCL(0);
 
     //test();
-    testVec();
+    // testVec();
+    loadKernels();
 
     return 0;
 }
