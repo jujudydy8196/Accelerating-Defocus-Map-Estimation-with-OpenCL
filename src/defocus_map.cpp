@@ -13,7 +13,7 @@ void imageGray( float* image, float* gray, int size );
 
 int main(int argc, char** argv) {
     
-    if(argc !=6) {
+    if(argc !=5) {
         cout << "Usage: defocus_map <original image> <lambda> <radius> <gradient_descent[1] / filtering[2]>" << endl;
         return -1;
     }
