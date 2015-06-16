@@ -192,7 +192,7 @@ void constructHE( const Vec<float>& input, Vec<float>& H, Vec<float>& E )
 {
     size_t size = H.getSize();
     for( size_t i = 0; i < size; ++i ){
-        if( input[i] > 255 ) E[i] = 255;
+        if( input[i] > 1 ) E[i] = 1;
         else if( input[i] < 0 ) E[i] = 0;
         else E[i] = input[i];
         if( E[i] ){
