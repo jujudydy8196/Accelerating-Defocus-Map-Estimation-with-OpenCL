@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
     }
 
     uchar* I_ori_uchar = NULL;
+    uchar* I_out = NULL;
     float* I_sparse = NULL;
     float* I_ori = NULL;
     float* I_gray = NULL;
@@ -37,6 +38,7 @@ int main(int argc, char** argv) {
     I_edge = new float[numPixel];
     I_ori = new float[n];
     I_ori_uchar = new uchar[n];
+    I_out = new uchar[numPixel];
     readPPM(I_ori_uchar, argv[1]);
     imageUchar2Float( I_ori_uchar, I_ori, n );
     imageGray( I_ori, I_gray, numPixel );
@@ -50,7 +52,8 @@ int main(int argc, char** argv) {
     if(mode==1) propagate( I_ori, I_sparse, width, height, lambda, r, result );
     else if(mode==2) propagate2( I_ori, I_sparse, width, height, lambda, r, result );
     else ;
-    // writePGM(result.getPtr(), width, height, "check_result.pgm");
+    imageFloat2Uchar( result.getPtr(), I_out, numPixel );
+    writePGM(I_out, width, height, "check_result.pgm");
     
     delete [] I_ori;
     delete [] I_gray;

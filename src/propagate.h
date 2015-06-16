@@ -2,18 +2,18 @@
 
 void propagate( float*, float*, size_t, size_t, float, size_t, Vec<float>& );
 void constructH( const float*, Vec<float>& H, const size_t);
-void constructEstimate( uchar*, Vec<float>& );
+void constructEstimate( float*, Vec<float>& );
 void conjgrad( const Vec<float>&, float*,const LaplaMat*, float*, const Vec<float>&, Vec<float>&, size_t, size_t, float );
 void vecFloat2uchar( const Vec<float>&, Vec<uchar>& );
 
 void propagate2( float*, float*, size_t, size_t, float, size_t, Vec<float>& );
 void vecUchar2float( const Vec<uchar>&, Vec<float>& );
-void constructHE( const uchar*, Vec<float>&, Vec<float>& );
+void constructHE( const float*, Vec<float>&, Vec<float>& );
 void constructHE( const Vec<float>&, Vec<float>&, Vec<float>& );
 void checkHE( const Vec<float>&, const Vec<float>& );
 
-void HFilter(float* , const float* , const Vec<uchar>& , const size_t);
-void lambda_LFilter(float*, const uchar*, const float*, const int, const int, const float, const int );
+void HFilter(float* , const float* , const Vec<float>& , const size_t);
+void lambda_LFilter(float*, const float*, const float*, const int, const int, const float, const int );
 void getAp(float*, const float*, const float*, const int);
 void printEstimate( const Vec<float>& , const size_t, ofstream&);
 void printP( const Vec<float>& , const size_t, ofstream&); 
@@ -120,7 +120,7 @@ void HFilter(float* Hp, const float* p, const Vec<float>& H, const size_t numPix
 	}
 }
 
-void lambda_LFilter(float* Lp, const uchar* I_ori, const float* p, const int height, const int width, const float lambda, const int r) {
+void lambda_LFilter(float* Lp, const float* I_ori, const float* p, const int height, const int width, const float lambda, const int r) {
     int idx, numWinPixel;
     numWinPixel = r*r;
     float* tmpI = new float[height*width];
@@ -144,9 +144,9 @@ void lambda_LFilter(float* Lp, const uchar* I_ori, const float* p, const int hei
 void propagate2( float* image, float* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<float>& result )
 {
     size_t size = w * h;
-    Vec<float> estimate( size ), H( size ), ones( size );
+    Vec<float> H( size ), ones( size );
     guided_filter gf( image, w, h, radius, 0.00001 );
-    constructHE( estimatedBlur, H, estimate );
+    constructHE( estimatedBlur, H, result );
 
     for ( size_t i = 0; i < size; ++i )
     {
@@ -154,19 +154,19 @@ void propagate2( float* image, float* estimatedBlur, size_t w, size_t h, float l
     }
 
     cout << size << endl;
-    checkHE( H, estimate );
-    cout << 0 << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, estimate ) << endl;    
+    checkHE( H, result );
+    cout << 0 << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, result ) << endl;    
     for( size_t i = 0; i < 500; ++i ){
         gf.run(H.getPtr(), H.getPtr());
-        gf.run(estimate.getPtr(), estimate.getPtr());
-        checkHE( H, estimate );
-        Vec<float>::divide( estimate, estimate, H );
-        checkHE( H, estimate ); 
-        constructHE( estimate, H, estimate );
-        cout << i << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, estimate ) << endl;
+        gf.run(result.getPtr(), result.getPtr());
+        checkHE( H, result );
+        Vec<float>::divide( result, result, H );
+        checkHE( H, result ); 
+        constructHE( result, H, result );
+        cout << i << " : " << Vec<float>::dot( ones, H ) << ", " << Vec<float>::dot( ones, result ) << endl;
     }
 
-    vecFloat2uchar( estimate, result );
+    // vecFloat2uchar( estimate, result );
 }
 
 /*void vecFloat2uchar( const Vec<uchar>& U, Vec<float>& F )

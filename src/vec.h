@@ -149,7 +149,7 @@ private:
 class LaplaMat
 {
 public:
-    LaplaMat(const uchar* I_ori, const size_t width, const size_t height, const size_t r);
+    LaplaMat(const float* I_ori, const size_t width, const size_t height, const size_t r);
     void run(float* Lp, const float* p, const float lambda) const;
     ~LaplaMat();
 private:
