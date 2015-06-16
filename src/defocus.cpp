@@ -111,7 +111,7 @@ void defocusEstimation(float* I, float* edge, float* out, float std, float lamda
 		for (int j=0; j<width; j++) {
 			if (edge[i*width+j] != 0 ) {
 
-				if (gRatio[i*width+j]>1.01){ // && (1.0-pow(gRatio[i*width+j],2))>0 ) {
+				if (gRatio[i*width+j]>1.01  && (pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2))>0 ) {
 					out[i*width+j] = sqrt((pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2)));
 			}
 				else
@@ -119,9 +119,12 @@ void defocusEstimation(float* I, float* edge, float* out, float std, float lamda
 			}
 			else
 				out[i*width+j] = 0;
+			// cout << out[i*width+j] << " " << (pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2)) << endl;
 		}
 	}	
 	sparseScale(out,maxBlur,height*width);
+	imageInfo( out, width*height );
+
 	write( out, width, height, "sparse.pgm" );
 
 	// for(size_t i = 0; i < height * width; ++i ){
@@ -132,11 +135,10 @@ void defocusEstimation(float* I, float* edge, float* out, float std, float lamda
 	// delete [] sparse;
 }
 void sparseScale(float* I, int maxBlur, size_t size) {
-	float max = I[0];
 	for( size_t i = 1; i < size; ++i ){
 		if( I[i] > maxBlur )
 			I[i] = maxBlur;
-		I[i] = I[i] / maxBlur * 255.0;
+		I[i] = I[i] / maxBlur ;//* 255.0;
 	}
 }
 void g1x(float* g, int* x, int* y, float std, int w) {
@@ -208,7 +210,7 @@ void write( const float* I, size_t w, size_t h, char* str )
 	for (size_t i = 0; i < size; ++i)
 	{
 		// cout << I[i] << endl;
-		out[i] = uchar((I[i]));//uchar( I[i]/270*128 + 128 );
+		out[i] = uchar((I[i]*255));//uchar( I[i]/270*128 + 128 );
 	}
     writePGM(out,w,h,str);
     delete [] out;
