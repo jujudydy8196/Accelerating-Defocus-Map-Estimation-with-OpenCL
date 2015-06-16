@@ -23,7 +23,7 @@ void propagate( float* image, float* estimatedBlur, size_t w, size_t h, float la
     size_t size = w * h;
 
     for(size_t i = 0; i < size; ++i){
-        cout << estimatedBlur[i] << ' ';
+        if( estimatedBlur[i] < 0 || estimatedBlur[i] > 1 ) cout << estimatedBlur[i] << ' ';
     }
     cout << endl;
 
