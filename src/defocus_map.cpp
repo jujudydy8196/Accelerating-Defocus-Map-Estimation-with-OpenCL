@@ -46,6 +46,8 @@ int main(int argc, char** argv) {
 
     // find sparse defocus map
     canny(I_gray, height, width, 1.2, 0.5, 0.8, &I_edge, "test");
+   writePGM(I_edge,width,height,"test.pgm");
+
     defocusEstimation(I_gray, I_edge, I_sparse, 1.0, 0.001, 3, width, height) ;
 
     Vec<float> result( numPixel );

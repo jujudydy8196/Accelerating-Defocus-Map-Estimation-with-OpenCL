@@ -4,6 +4,8 @@
 void defocusEstimation(float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
 
+	write( edge, width, height, "edge.pgm" );
+
 	float std1= std;
 	float std2= std1 * 1.5;
 	int w=  (2*ceil(2* std1))+1;
@@ -193,7 +195,7 @@ void writeDiff( const float* I, size_t w, size_t h, char* str )
 	uchar* out = new uchar[size];
 	for (size_t i = 0; i < size; ++i)
 	{
-		out[i] = uchar((I[i]+128));//uchar( I[i]/270*128 + 128 );
+		out[i] = uchar((I[i]*255+128));//uchar( I[i]/270*128 + 128 );
 	}
     writePGM(out,w,h,str);
     delete [] out;

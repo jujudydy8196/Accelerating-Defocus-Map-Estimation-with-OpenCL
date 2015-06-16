@@ -2,7 +2,7 @@ CXX=g++
 EXES=judy propagate defocus_map test_vec cl_test
 
 CFLAGS=-Wall -c -O2 -std=c++11 
-LFLAGS=-lOpenCL -lglog -lgflags
+# LFLAGS=-lOpenCL -lglog -lgflags
 
 all: $(EXES)
 
