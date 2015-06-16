@@ -113,7 +113,7 @@ void testVec()
     device_manager->GetKernel("vec.cl", "vecScalarAdd");
     device_manager->GetKernel("vec.cl", "vecMultiply");
     device_manager->GetKernel("vec.cl", "vecDivide");
-    device_manager->GetKernel("vec.cl", "vecScalorMultiply");
+    device_manager->GetKernel("vec.cl", "vecScalarMultiply");
     device_manager->GetKernel("vec.cl", "vecTest");
 
     int size = 5;
@@ -125,7 +125,7 @@ void testVec()
     const size_t block_dim[1] = { 1024 };
     size_t grid_dim[1] = { 2048 };
 
-    cl_kernel kernel = device_manager->GetKernel("vec.cl", "vecDot");
+    cl_kernel kernel = device_manager->GetKernel("vec.cl", "vecSum");
     auto d_v1 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_v2 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_result = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
@@ -136,7 +136,7 @@ void testVec()
     vector<pair <const void*, size_t> > arg_and_sizes;
     arg_and_sizes.push_back( pair<const void*, size_t>( d_sum.get(), sizeof(cl_mem) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( d_v1.get(), sizeof(cl_mem) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( d_v2.get(), sizeof(cl_mem) ) );
+    // arg_and_sizes.push_back( pair<const void*, size_t>( d_v2.get(), sizeof(cl_mem) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( NULL, block_dim[0]*sizeof(float) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, grid_dim, NULL, block_dim );
