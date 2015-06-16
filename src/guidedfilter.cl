@@ -94,3 +94,33 @@ __kernel void guidedFilterInvMat(
         invSigma[9*id+8] = a11a22_a12a21*detA;
     }
 }
+
+__kernel void guidedFilterComputeAB(
+    __global const float* meanR,
+    __global const float* meanG,
+    __global const float* meanB,
+    __global const float* meanP,
+    __global const float* varRP,
+    __global const float* varGP,
+    __global const float* varBP,
+    __global float* a1,
+    __global float* a2,
+    __global float* a3,
+    __global float* b,
+    __global const float* invSigma,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+    if( id < size ){
+        float cov_Ir_p = varRP[id] - meanR[id] * meanP[id];
+        float cov_Ig_p = varGP[id] - meanG[id] * meanP[id];
+        float cov_Ib_p = varBP[id] - meanB[id] * meanP[id];
+
+        a1[id] = cov_Ir_p*invSigma[9*id  ] + cov_Ig_p*invSigma[9*id+3] + cov_Ib_p*invSigma[9*id+6];
+        a2[id] = cov_Ir_p*invSigma[9*id+1] + cov_Ig_p*invSigma[9*id+4] + cov_Ib_p*invSigma[9*id+7];
+        a3[id] = cov_Ir_p*invSigma[9*id+2] + cov_Ig_p*invSigma[9*id+5] + cov_Ib_p*invSigma[9*id+8];
+
+        b[id] = meanP[id] - a1[id]*meanR[id] - a2[id]*meanG[id] - a3[id]*meanB[id];
+    }
+}
