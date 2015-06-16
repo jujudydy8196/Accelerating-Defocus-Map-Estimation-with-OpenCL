@@ -1,7 +1,7 @@
 #include "defocus.h"
 #include "fileIO.h"
 
-void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda, float maxBlur, int width, int height) {
+void defocusEstimation(float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
 
 	float std1= std;
@@ -104,30 +104,30 @@ void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda
 
 	delete []mg1;
 	delete []mg2;
-	float* sparse = new float[width*height];
+	// float* sparse = new float[width*height];
 	for (int i=0; i<height; i++) {
 		for (int j=0; j<width; j++) {
 			if (edge[i*width+j] != 0 ) {
 
 				if (gRatio[i*width+j]>1.01){ // && (1.0-pow(gRatio[i*width+j],2))>0 ) {
-					sparse[i*width+j] = sqrt((pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2)));
+					out[i*width+j] = sqrt((pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2)));
 			}
 				else
-					sparse[i*width+j] = 0;
+					out[i*width+j] = 0;
 			}
 			else
-				sparse[i*width+j] = 0;
+				out[i*width+j] = 0;
 		}
 	}	
-	sparseScale(sparse,maxBlur,height*width);
-	write( sparse, width, height, "sparse.pgm" );
+	sparseScale(out,maxBlur,height*width);
+	write( out, width, height, "sparse.pgm" );
 
-	for(size_t i = 0; i < height * width; ++i ){
-		out[i] = uchar( sparse[i] );
-	}
+	// for(size_t i = 0; i < height * width; ++i ){
+	// 	out[i] = uchar( sparse[i] );
+	// }
 
 	delete [] gRatio;
-	delete [] sparse;
+	// delete [] sparse;
 }
 void sparseScale(float* I, int maxBlur, size_t size) {
 	float max = I[0];
@@ -150,7 +150,7 @@ void g1y(float* g, int* x, int* y, float std, int w) {
 }
 
 
-void filter(float* gim, float* g , uchar* I, int width, int height, int w) {
+void filter(float* gim, float* g , float* I, int width, int height, int w) {
 	for( size_t i = 0; i < width * height; ++i ){
 		gim[i] = 0;
 	}

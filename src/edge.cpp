@@ -2,11 +2,11 @@
 #include <cstdio>
 #include <cstdlib>
 
-void canny(uchar *image, int rows, int cols, float sigma,
-         float tlow, float thigh, uchar **edge, char *fname)
+void canny(float *image, int rows, int cols, float sigma,
+         float tlow, float thigh, float **edge, char *fname)
 {
    FILE *fpdir=NULL;          /* File to write the gradient image to.     */
-   uchar *nms;        /* Points that are local maximal magnitude. */
+   float *nms;        /* Points that are local maximal magnitude. */
    short int *smoothedim,     /* The image after gaussian smoothing.      */
              *delta_x,        /* The first devivative image, x-direction. */
              *delta_y,        /* The first derivative image, y-direction. */
@@ -65,7 +65,7 @@ void canny(uchar *image, int rows, int cols, float sigma,
    ****************************************************************************/
    if(VERBOSE) 
    	cout << "Doing the non-maximal suppression.\n";
-   if((nms = (uchar *) calloc(rows*cols,sizeof(uchar)))==NULL){
+   if((nms = (float *) calloc(rows*cols,sizeof(float)))==NULL){
       cout << "Error allocating the nms image.\n";
       exit(1);
    }
@@ -76,7 +76,7 @@ void canny(uchar *image, int rows, int cols, float sigma,
    * Use hysteresis to mark the edge pixels.
    ****************************************************************************/
    if(VERBOSE) cout << "Doing hysteresis thresholding.\n";
-   if((*edge=(uchar *)calloc(rows*cols,sizeof(uchar))) ==NULL){
+   if((*edge=(float *)calloc(rows*cols,sizeof(float))) ==NULL){
       cout << "Error allocating the edge image.\n" ;
       exit(1);
    }
@@ -161,7 +161,7 @@ void radian_direction(short int *delta_x, short int *delta_y, int rows,
    }
 }
 
-void gaussian_smooth(uchar *image, int rows, int cols, float sigma, short int **smoothedim)
+void gaussian_smooth(float *image, int rows, int cols, float sigma, short int **smoothedim)
 {
    int r, c, rr, cc,     /* Counter variables. */
       windowsize,        /* Dimension of the gaussian kernel. */
@@ -309,7 +309,7 @@ void derrivative_x_y(short int *smoothedim, int rows, int cols, short int **delt
    }
 }
 
-void non_max_supp(short *mag, short *gradx, short *grady, int nrows, int ncols, uchar *result) 
+void non_max_supp(short *mag, short *gradx, short *grady, int nrows, int ncols, float *result) 
 {
     int rowcount, colcount,count;
     short *magrowptr,*magptr;
@@ -317,16 +317,16 @@ void non_max_supp(short *mag, short *gradx, short *grady, int nrows, int ncols, 
     short *gyrowptr,*gyptr,z1,z2;
     short m00,gx,gy;
     float mag1,mag2,xperp,yperp;
-    uchar *resultrowptr, *resultptr;
+    float *resultrowptr, *resultptr;
 
     for(count=0,resultrowptr=result,resultptr=result+ncols*(nrows-1); 
         count<ncols; resultptr++,resultrowptr++,count++){
-        *resultrowptr = *resultptr = (uchar) 0;
+        *resultrowptr = *resultptr = (float) 0;
     }
 
     for(count=0,resultptr=result,resultrowptr=result+ncols-1;
         count<nrows; count++,resultptr+=ncols,resultrowptr+=ncols){
-        *resultptr = *resultrowptr = (uchar) 0;
+        *resultptr = *resultrowptr = (float) 0;
     }
 
    for(rowcount=1,magrowptr=mag+ncols+1,gxrowptr=gradx+ncols+1,
@@ -339,7 +339,7 @@ void non_max_supp(short *mag, short *gradx, short *grady, int nrows, int ncols, 
          colcount++,magptr++,gxptr++,gyptr++,resultptr++){   
          m00 = *magptr;
          if(m00 == 0){
-            *resultptr = (uchar) NOEDGE;
+            *resultptr = (float) NOEDGE;
          }
          else{
             xperp = -(gx = *gxptr)/((float)m00);
@@ -487,22 +487,22 @@ void non_max_supp(short *mag, short *gradx, short *grady, int nrows, int ncols, 
 
             if ((mag1 > 0.0) || (mag2 > 0.0))
             {
-                *resultptr = (uchar) NOEDGE;
+                *resultptr = (float) NOEDGE;
             }
             else
             {    
                 if (mag2 == 0.0)
-                    *resultptr = (uchar) NOEDGE;
+                    *resultptr = (float) NOEDGE;
                 else
-                    *resultptr = (uchar) POSSIBLE_EDGE;
+                    *resultptr = (float) POSSIBLE_EDGE;
             }
         } 
     }
 }
 
 
-void apply_hysteresis(short int *mag, uchar *nms, int rows, int cols,
-	float tlow, float thigh, uchar *edge)
+void apply_hysteresis(short int *mag, float *nms, int rows, int cols,
+	float tlow, float thigh, float *edge)
 {
    int r, c, pos, numedges, lowcount, highcount, lowthreshold, highthreshold,
        i, hist[32768], rr, cc;
@@ -598,10 +598,10 @@ void apply_hysteresis(short int *mag, uchar *nms, int rows, int cols,
    }
 }
 
-void follow_edges(uchar *edgemapptr, short *edgemagptr, short lowval, int cols)
+void follow_edges(float *edgemapptr, short *edgemagptr, short lowval, int cols)
 {
    short *tempmagptr;
-   uchar *tempmapptr;
+   float *tempmapptr;
    int i;
    float thethresh;
    int x[8] = {1,1,0,-1,-1,-1,0,1},
@@ -612,7 +612,7 @@ void follow_edges(uchar *edgemapptr, short *edgemagptr, short lowval, int cols)
       tempmagptr = edgemagptr - y[i]*cols + x[i];
 
       if((*tempmapptr == POSSIBLE_EDGE) && (*tempmagptr > lowval)){
-         *tempmapptr = (uchar) EDGE;
+         *tempmapptr = (float) EDGE;
          follow_edges(tempmapptr,tempmagptr, lowval, cols);
       }
    }
