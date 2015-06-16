@@ -7,10 +7,14 @@
 
 using namespace std;
 
+void imageUchar2Float( uchar* uImage, float* fImage, const int size );
+void imageFloat2Uchar( float* fImage, uchar* uImage, const int size );
+void imageGray( float* image, float* gray, int size );
+
 int main(int argc, char** argv) {
     
-    if(argc !=7) {
-        cout << "Usage: defocus_map <original image> <gray image> <full depth image> <lambda> <radius> <gradient_descent[1] / filtering[2]>" << endl;
+    if(argc !=6) {
+        cout << "Usage: defocus_map <original image> <lambda> <radius> <gradient_descent[1] / filtering[2]>" << endl;
         return -1;
     }
 
@@ -23,9 +27,9 @@ int main(int argc, char** argv) {
     float lambda;
 
     sizePGM(width, height, argv[1]);
-    lambda = atof(argv[4]);
-    r = atof(argv[5]);
-    mode = atoi(argv[6]);
+    lambda = atof(argv[2]);
+    r = atof(argv[3]);
+    mode = atoi(argv[4]);
     numPixel = width*height;
     int n = numPixel * 3;
     I_sparse = new float[numPixel];
@@ -42,11 +46,11 @@ int main(int argc, char** argv) {
     canny(I_gray, height, width, 1.2, 0.5, 0.8, &I_edge, "test");
     defocusEstimation(I_gray, I_edge, I_sparse, 1.0, 0.001, 3, width, height) ;
 
-    Vec<uchar> result( numPixel );
+    Vec<float> result( numPixel );
     if(mode==1) propagate( I_ori, I_sparse, width, height, lambda, r, result );
     else if(mode==2) propagate2( I_ori, I_sparse, width, height, lambda, r, result );
     else ;
-    writePGM(result.getPtr(), width, height, "check_result.pgm");
+    // writePGM(result.getPtr(), width, height, "check_result.pgm");
     
     delete [] I_ori;
     delete [] I_gray;
@@ -59,6 +63,13 @@ void imageUchar2Float( uchar* uImage, float* fImage, const int size )
 {
     for( size_t i = 0; i < size; ++i ){
         fImage[i] = uImage[i] / 255.0f;
+    }
+}
+
+void imageFloat2Uchar( float* fImage, uchar* uImage, const int size )
+{
+    for( size_t i = 0; i < size; ++i ){
+        uImage[i] = fImage[i] * 255.0;
     }
 }
 

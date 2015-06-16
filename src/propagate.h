@@ -6,7 +6,7 @@ void constructEstimate( uchar*, Vec<float>& );
 void conjgrad( const Vec<float>&, float*,const LaplaMat*, float*, const Vec<float>&, Vec<float>&, size_t, size_t, float );
 void vecFloat2uchar( const Vec<float>&, Vec<uchar>& );
 
-void propagate2( uchar*, uchar*, size_t, size_t, float, size_t, Vec<uchar>& );
+void propagate2( float*, float*, size_t, size_t, float, size_t, Vec<float>& );
 void vecUchar2float( const Vec<uchar>&, Vec<float>& );
 void constructHE( const uchar*, Vec<float>&, Vec<float>& );
 void constructHE( const Vec<float>&, Vec<float>&, Vec<float>& );
@@ -141,7 +141,7 @@ void lambda_LFilter(float* Lp, const uchar* I_ori, const float* p, const int hei
     delete [] tmpI;
 }
 
-void propagate2( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<uchar>& result )
+void propagate2( float* image, float* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<float>& result )
 {
     size_t size = w * h;
     Vec<float> estimate( size ), H( size ), ones( size );
@@ -177,13 +177,13 @@ void propagate2( uchar* image, uchar* estimatedBlur, size_t w, size_t h, float l
     }
 }*/
 
-void constructHE( const uchar* input, Vec<float>& H, Vec<float>& E )
+void constructHE( const float* input, Vec<float>& H, Vec<float>& E )
 {
     size_t size = H.getSize();
     for( size_t i = 0; i < size; ++i ){
         if( input[i] ){
             H[i] = 1;
-            E[i] = float( input[i] );
+            E[i] = input[i];
         }
     }
 }
