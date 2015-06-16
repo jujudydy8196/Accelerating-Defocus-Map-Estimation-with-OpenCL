@@ -2,9 +2,11 @@
 #include "cl_helper.h"
 #include "global.h"
 
-void propagatecl()
+void propagatecl( float* image, float* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<float>& result )
 {
     loadKernels();
+
+    size_t size = w * h;
 }
 
 void loadKernels()

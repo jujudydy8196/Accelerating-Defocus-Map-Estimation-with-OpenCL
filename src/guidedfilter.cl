@@ -124,3 +124,4 @@ __kernel void guidedFilterComputeAB(
         b[id] = meanP[id] - a1[id]*meanR[id] - a2[id]*meanG[id] - a3[id]*meanB[id];
     }
 }
+       
