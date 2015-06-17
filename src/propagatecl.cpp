@@ -15,6 +15,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     auto d_H = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_r = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_p = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_Hp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_Lp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_Ap = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     // guided filter
     auto d_gf_R = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_gf_G = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
@@ -89,9 +92,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
     // conjgrad
     for( size_t i = 0; i < 1000; ++i ){
-        // HFilter( Hp, p.getPtr(), H, size);           // Hp .* p
+        // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
         // LM->run(Lp, p.getPtr(), lambda);
-        // getAp( Ap.getPtr(), Hp, Lp, size);           // Hp + Lp
+        // getAp( Ap.getPtr(), Hp, Lp, size);           // Ap = Hp + Lp
         // alpha = rsold / Vec<float>::dot( p, Ap );    // dot
         // Vec<float>::add( x, x, p, 1, alpha );        // add, but alpha
         // Vec<float>::add( r, r, Ap, 1, -alpha );      // add
