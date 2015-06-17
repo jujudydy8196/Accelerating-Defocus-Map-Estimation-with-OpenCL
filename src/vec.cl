@@ -100,7 +100,7 @@ __kernel void vecDivide(
     size_t id = get_global_id(0);
     size_t gSize = get_global_size(0);
 
-    if( id < size ){
+        if( id < size ){
         result[id] = v1[id] / v2[id];
     }
 }
@@ -130,7 +130,7 @@ __kernel void constructH(
     size_t id = get_global_id(0);
 
     if( id < size ){
-        if( estimate[id] ) H[id] = 1;
+        if( estimate[id] != 0 ) H[id] = 1;
         else H[id] = 0;
     }
 }

@@ -2,7 +2,7 @@ CXX=g++
 EXES=judy propagate defocus_map test_vec cl_test
 
 CFLAGS=-Wall -c -O2 -std=c++11 
-# LFLAGS=-lOpenCL -lglog -lgflags
+LFLAGS=-lOpenCL -lglog -lgflags
 
 all: $(EXES)
 
@@ -13,7 +13,7 @@ judy: judy.o fileIO.o edge.o defocus.o
 propagate_blur: fileIO.o guidedfilter.o propagate_blur.o
 	$(CXX) $? $(LFLAGS) -o $@
 
-defocus_map: fileIO.o guidedfilter.o edge.o defocus.o defocus_map.o
+defocus_map: fileIO.o guidedfilter.o edge.o defocus.o defocus_map.o propagatecl.o cl_helper.o vec.o
 	$(CXX) $^ $(LFLAGS) -o $@
 
 test_vec: guidedfilter.o test_vec.o
