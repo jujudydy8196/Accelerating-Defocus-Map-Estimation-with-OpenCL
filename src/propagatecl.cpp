@@ -22,6 +22,18 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     auto d_gf_meanR = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_gf_meanG = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_gf_meanB = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_Irr = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_Irg = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_Irb = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_Igg = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_Igb = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_Ibb = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_varIrr = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_varIrg = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_varIrb = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_varIgg = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_varIgb = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_gf_varIbb = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_gf_invSigma = device_manager->AllocateMemory(CL_MEM_READ_WRITE, 9*size*sizeof(float));
     
     // write to gpu memory
@@ -85,7 +97,98 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes[1] = pair<const void*, size_t>( d_gf_B.get(), sizeof(cl_mem) );
     device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
 
+	//          rr, rg, rb 
+	// sigma =  rg, gg, gb
+	//          rb, gb, bb
+	// 
+    kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
+	//rr
+	arg_and_sizes.resize(0);
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_Irr.get(), sizeof(cl_mem) ) ); // rr
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_R.get(), sizeof(cl_mem) ) ); // [1] r
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_R.get(), sizeof(cl_mem) ) ); // [2] r
+    arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+	//rg
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_Irg.get(), sizeof(cl_mem) );    // rg
+    arg_and_sizes[2] = pair<const void*, size_t>( d_gf_G.get(), sizeof(cl_mem) );         // [2] g
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+	//rb
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_Irb.get(), sizeof(cl_mem) );   //  rb
+    arg_and_sizes[2] = pair<const void*, size_t>( d_gf_B.get(), sizeof(cl_mem) );        //  [2] b
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+	//gg
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_Igg.get(), sizeof(cl_mem) );   //  gg
+    arg_and_sizes[1] = pair<const void*, size_t>( d_gf_G.get(), sizeof(cl_mem) );        //  [1] g
+    arg_and_sizes[2] = pair<const void*, size_t>( d_gf_G.get(), sizeof(cl_mem) );        //  [2] g
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+	//gb
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_Igb.get(), sizeof(cl_mem) );   //  gb
+    arg_and_sizes[2] = pair<const void*, size_t>( d_gf_B.get(), sizeof(cl_mem) );        //  [2] b
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+	//bb
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_Ibb.get(), sizeof(cl_mem) );   //  bb
+    arg_and_sizes[1] = pair<const void*, size_t>( d_gf_B.get(), sizeof(cl_mem) );        //  [1] b
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+	
+    kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
+    arg_and_sizes.resize(0);
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_varIrr.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_Irr.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+	
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_varIrg.get(), sizeof(cl_mem) );
+    arg_and_sizes[1] = pair<const void*, size_t>( d_gf_Irg.get(), sizeof(cl_mem) );
+    device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
 
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_varIrb.get(), sizeof(cl_mem) );
+    arg_and_sizes[1] = pair<const void*, size_t>( d_gf_Irb.get(), sizeof(cl_mem) );
+    device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_varIgg.get(), sizeof(cl_mem) );
+    arg_and_sizes[1] = pair<const void*, size_t>( d_gf_gg.get(), sizeof(cl_mem) );
+    device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_varIgb.get(), sizeof(cl_mem) );
+    arg_and_sizes[1] = pair<const void*, size_t>( d_gf_Igb.get(), sizeof(cl_mem) );
+    device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_varIbb.get(), sizeof(cl_mem) );
+    arg_and_sizes[1] = pair<const void*, size_t>( d_gf_Ibb.get(), sizeof(cl_mem) );
+    device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+
+	//I'm not sure if this is the right way to release memory from gpu....
+	clReleaseMemObject(d_gf_Irr);
+	clReleaseMemObject(d_gf_Irg);
+	clReleaseMemObject(d_gf_Irb);
+	clReleaseMemObject(d_gf_Igg);
+	clReleaseMemObject(d_gf_Igb);
+	clReleaseMemObject(d_gf_Ibb);
+
+	// invertSigma
+    kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterInvMat");
+    arg_and_sizes.resize(0);
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanR.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanG.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanB.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_varIrr.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_varIrg.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_varIrb.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_varIgg.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_varIgb.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_varIbb.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_invSigma.get(), sizeof(cl_mem) ) );
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+	clReleaseMemObject(d_gf_varIrr);
+	clReleaseMemObject(d_gf_varIrg);
+	clReleaseMemObject(d_gf_varIrb);
+	clReleaseMemObject(d_gf_varIgg);
+	clReleaseMemObject(d_gf_varIgb);
+	clReleaseMemObject(d_gf_varIbb);
 
     // conjgrad
     for( size_t i = 0; i < 1000; ++i ){
