@@ -69,6 +69,8 @@ int main(int argc, char** argv) {
 
     imageFloat2Uchar(I_ori, I_ori2_uchar, n);
     writePPM(I_ori2_uchar, width, height,"color.ppm");
+    imageFloat2Uchar(I_sparse2, I_ori2_uchar, numPixel);
+    writePGM(I_ori2_uchar, width, height,"sparse2.pgm");
     Vec<float> result( numPixel );
     if(mode==1) propagate( I_ori, I_sparse2, width, height, lambda, r, result );
     else if(mode==2) propagate2( I_ori, I_sparse, width, height, lambda, r, result );
@@ -80,6 +82,11 @@ int main(int argc, char** argv) {
     delete [] I_gray;
     delete [] I_edge;
     delete [] I_sparse;
+    delete [] I_sparse2;
+    delete [] I_ori2_uchar;
+    delete [] I_ori_uchar;
+    delete [] I_sparse_uchar;
+    delete [] I_out;
     return 0;
 }
 
