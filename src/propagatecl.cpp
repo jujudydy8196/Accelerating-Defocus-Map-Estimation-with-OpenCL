@@ -84,7 +84,23 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes[0] = pair<const void*, size_t>( d_gf_meanB.get(), sizeof(cl_mem) );
     arg_and_sizes[1] = pair<const void*, size_t>( d_gf_B.get(), sizeof(cl_mem) );
     device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+
+
+
+    // conjgrad
+    for( size_t i = 0; i < 1000; ++i ){
+        // HFilter( Hp, p.getPtr(), H, size);           // Hp .* p
+        // LM->run(Lp, p.getPtr(), lambda);
+        // getAp( Ap.getPtr(), Hp, Lp, size);           // Hp + Lp
+        // alpha = rsold / Vec<float>::dot( p, Ap );    // dot
+        // Vec<float>::add( x, x, p, 1, alpha );        // add, but alpha
+        // Vec<float>::add( r, r, Ap, 1, -alpha );      // add
+        // rsnew = Vec<float>::dot( r, r );             // dot
+        // Vec<float>::add( p, r, p, 1, rsnew/rsold );  // add, but rsnew/rsold
+        // rsold = rsnew;
+    }
     // device_manager->ReadMemory(result.getPtr(), *d_H.get(), size*sizeof(float));
+    
 }
 
 void loadKernels()
