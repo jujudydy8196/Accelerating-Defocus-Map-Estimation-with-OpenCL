@@ -121,6 +121,20 @@ __kernel void vecScalarMultiply(
     }
 }
 
+__kernel void constructH(
+    __global float *H,
+    __global const float *estimate,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+
+    if( id < size ){
+        if( estimate[id] ) H[id] = 1;
+        else H[id] = 0;
+    }
+}
+
 __kernel void vecTest(
     __global float *result,
     const int size

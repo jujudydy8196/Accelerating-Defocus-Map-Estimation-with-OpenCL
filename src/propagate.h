@@ -1,8 +1,8 @@
 #include "vec.h"
 
-void propagate( float*, float*, size_t, size_t, float, size_t, Vec<float>& );
+void propagate( const float*, const float*, const size_t, const size_t, const float, const size_t, Vec<float>& );
 void constructH( const float*, Vec<float>& H, const size_t);
-void constructEstimate( float*, Vec<float>& );
+void constructEstimate( const float*, Vec<float>& );
 void conjgrad( const Vec<float>&, float*,const LaplaMat*, float*, const Vec<float>&, Vec<float>&, size_t, size_t, float );
 void vecFloat2uchar( const Vec<float>&, Vec<uchar>& );
 
@@ -18,7 +18,7 @@ void getAp(float*, const float*, const float*, const int);
 void printEstimate( const Vec<float>& , const size_t, ofstream&);
 void printP( const Vec<float>& , const size_t, ofstream&); 
 
-void propagate( float* image, float* estimatedBlur, size_t w, size_t h, float lambda, size_t radius, Vec<float>& result )
+void propagate( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t radius, Vec<float>& result )
 {
     size_t size = w * h;
 
@@ -49,7 +49,7 @@ void constructH( const float* estimatedBlur, Vec<float>& H, const size_t numPixe
     }
 }
 
-void constructEstimate( float* estimatedBlur, Vec<float>& estimate )
+void constructEstimate( const float* estimatedBlur, Vec<float>& estimate )
 {
     size_t size = estimate.getSize();
     for( size_t i = 0; i < size; ++i ){
