@@ -356,6 +356,12 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
         // alpha = rsold / Vec<float>::dot( p, Ap );    // dot
+        int tmpSize = size;
+        size_t tmpGlobalSize = global_size1[0];
+        // recursive dot
+        while( tmpSize > local_size1[0] ){
+
+        }
         // Vec<float>::add( x, x, p, 1, alpha );        // add, but alpha
         // Vec<float>::add( r, r, Ap, 1, -alpha );      // add
         // rsnew = Vec<float>::dot( r, r );             // dot
