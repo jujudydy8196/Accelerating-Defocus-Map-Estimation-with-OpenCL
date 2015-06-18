@@ -44,15 +44,15 @@ __kernel void guidedFilterRGB(
 }
 
 __kernel void guidedFilterInvMat(
-    __global float *meanR,
-    __global float *meanG,
-    __global float *meanB,
-    __global float *varRR,
-    __global float *varRG,
-    __global float *varRB,
-    __global float *varGG,
-    __global float *varGB,
-    __global float *varBB,
+    __global const float *meanR,
+    __global const float *meanG,
+    __global const float *meanB,
+    __global const float *varRR,
+    __global const float *varRG,
+    __global const float *varRB,
+    __global const float *varGG,
+    __global const float *varGB,
+    __global const float *varBB,
     __global float *invSigma,
     const int size
 )
@@ -96,17 +96,17 @@ __kernel void guidedFilterInvMat(
 }
 
 __kernel void guidedFilterComputeAB(
-    __global const float* meanR,
-    __global const float* meanG,
-    __global const float* meanB,
-    __global const float* meanP,
-    __global const float* varRP,
-    __global const float* varGP,
-    __global const float* varBP,
-    __global float* a1,
-    __global float* a2,
-    __global float* a3,
-    __global float* b,
+    __global const float *meanR,
+    __global const float *meanG,
+    __global const float *meanB,
+    __global const float *meanP,
+    __global const float *varRP,
+    __global const float *varGP,
+    __global const float *varBP,
+    __global float *a1,
+    __global float *a2,
+    __global float *a3,
+    __global float *b,
     __global const float* invSigma,
     const int size
 )
@@ -123,4 +123,23 @@ __kernel void guidedFilterComputeAB(
 
         b[id] = meanP[id] - a1[id]*meanR[id] - a2[id]*meanG[id] - a3[id]*meanB[id];
     }
-}   
+}
+
+__kernel void guidedFilterRunResult(
+    __global float *q,
+    __global const float *Ir,
+    __global const float *Ig,
+    __global const float *Ib,
+    __global const float *meanA1,
+    __global const float *meanA2,
+    __global const float *meanA3,
+    __global const float *meanB,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+
+    if( id < size ){
+        q[id] = Ir[id]*meanA1[id] + Ig[id]*meanA2[id] + Ib[id]*meanA3[id] + meanB[id];
+    }
+}

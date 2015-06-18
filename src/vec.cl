@@ -135,16 +135,71 @@ __kernel void constructH(
     }
 }
 
-__kernel void vecTest(
-    __global float *result,
+// size should < 1024
+__kernel void computeAlpha(
+    __global float *alpha,
+    __global const float *v,
+    __local float *buffer,
+    __global const float *rsold,
     const int size
 )
 {
     size_t id = get_global_id(0);
-    size_t gSize = get_global_size(0);
-    size_t tmp = get_group_id(0);
 
-    if( id < size ){
-        result[id] = tmp;
+    vecSum( alpha, v, buffer, size );
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if( id == 0 ){
+        alpha[0] = rsold[0] / alpha[0];
     }
 }
+
+__kernel void computeXR(
+    __global float *x,
+    __global const float *p,
+    __global float *r,
+    __global const float *Ap,
+    __global float *alpha,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+
+    vecScalarAdd( x, x, p, 1, alpha[0], size );
+    vecScalarAdd( r, r, Ap, 1, -alpha[0], size );
+}
+
+// size < 1024
+__kernel void computeRs(
+    __global float *rsold,
+    __global float *rsRatio,
+    __global const float *v,
+    __local float *buffer,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+
+    vecSum( rsRatio, v, buffer, size );
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    if( id == 0 ){
+        float new = rsRatio[0];
+        rsRatio[0] = new / rsold[0];
+        rsold[0] = new;
+    }
+}
+
+__kernel void computeP(
+    __global float *p,
+    __global const float *r,
+    __global float *rsRatio,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+
+    vecScalarAdd( p, r, p, 1, rsRatio[0], size );
+
+}
+
+

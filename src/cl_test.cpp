@@ -187,6 +187,7 @@ int main( int argc, char** argv )
     //test();
     // testVec();
     loadKernels();
+    testSum();
 
     return 0;
 }
