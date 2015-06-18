@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         timelog << "propagate time: " ;
     else if (mode==3)
         timelog << "cl_propagate time: " ;
-    timelog << << double(stop - start) / CLOCKS_PER_SEC <<endl;
+    timelog << double(stop - start) / CLOCKS_PER_SEC <<endl;
     timelog.close();
 
     imageFloat2Uchar( result.getPtr(), I_out, numPixel );

@@ -223,7 +223,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
-    printClMemory( size, *d_rr.get() );
+    //printClMemory( size, *d_rr.get() );
 
     int tmpSize = size;
     size_t tmpGlobalSize[1] = { global_size1[0] };
@@ -261,8 +261,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
     // conjgrad
     float a1 = 0, a2 = 0;
-    for( size_t i = 0; i < 1; ++i ){
-        cout << i << "\n";
+    for( size_t i = 0; i < 1000; ++i ){
+        //cout << i << "\n";
         // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
