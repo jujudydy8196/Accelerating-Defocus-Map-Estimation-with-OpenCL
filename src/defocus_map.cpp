@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <glog/logging.h>
 #include <gflags/gflags.h>
@@ -94,7 +95,16 @@ int main(int argc, char** argv) {
     else if(mode==3) propagatecl( I_ori, I_sparse2, width, height, lambda, r, result );
     stop = clock();
 
-    cout << "propagate time: " << double(stop - start) / CLOCKS_PER_SEC <<endl;    
+    cout << "propagate time: " << double(stop - start) / CLOCKS_PER_SEC <<endl; 
+    
+    ofstream timelog;
+    timelog.open("time.txt", ios::app);
+    if (mode==1) 
+        timelog << "propagate time: " ;
+    else if (mode==3)
+        timelog << "cl_propagate time: " ;
+    timelog << << double(stop - start) / CLOCKS_PER_SEC <<endl;
+    timelog.close();
 
     imageFloat2Uchar( result.getPtr(), I_out, numPixel );
     writePGM(I_out, width, height, "check_result.pgm");
