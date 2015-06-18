@@ -15,9 +15,13 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     auto d_H = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_r = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_p = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_x = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_Hp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_Lp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_Ap = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_alpha = device_manager->AllocateMemory(CL_MEM_READ_WRITE, sizeof(float));
+    auto d_rsold = device_manager->AllocateMemory(CL_MEM_READ_WRITE, sizeof(float));
+    auto d_rsRatio = device_manager->AllocateMemory(CL_MEM_READ_WRITE, sizeof(float));
     // guided filter
     auto d_gf_R = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_gf_G = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
@@ -49,6 +53,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     auto d_a3 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_b = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_dotBuffer = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    // reference
+    auto &d_rr = d_Hp;
     
     // write to gpu memory
     device_manager->WriteMemory( image, *d_image.get(), 3*size*sizeof(float));
@@ -207,10 +213,55 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 	// clReleaseMemObject(d_gf_varIgg);
 	// clReleaseMemObject(d_gf_varIgb);
 	// clReleaseMemObject(d_gf_varIbb);
+    
+    // initialize rsold
+    kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
+    arg_and_sizes.resize(0);
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+    printClMemory( size, *d_rr.get() );
+
+    int tmpSize = size;
+    size_t tmpGlobalSize[1] = { global_size1[0] };
+    // recursive sum
+    while( tmpSize > local_size1[0] ){
+        kernel = device_manager->GetKernel("vec.cl", "vecSum");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
+
+        if( tmpSize % local_size1[0] ) tmpSize = tmpSize / local_size1[0] + 1;
+        else tmpSize = tmpSize / local_size1[0];
+        tmpGlobalSize[0] = getGlobalSize( tmpSize, local_size1[0] );
+
+        kernel = device_manager->GetKernel("vec.cl", "vecCopy");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
+    } 
+    printClMemory( tmpSize, *d_rr.get() );
+
+    kernel = device_manager->GetKernel("vec.cl", "vecSum");
+    arg_and_sizes.resize(0);
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_rsold.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
+    printClMemory( 1, *d_rsold.get() );
 
     // conjgrad
     float a1 = 0, a2 = 0;
-    for( size_t i = 0; i < 1000; ++i ){
+    for( size_t i = 0; i < 1; ++i ){
         cout << i << "\n";
         // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
@@ -220,7 +271,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-        
+
         // LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
         //       boxfilter
@@ -368,37 +419,120 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
         int tmpSize = size;
-        size_t tmpGlobalSize = global_size1[0];
+        size_t tmpGlobalSize[1] = { global_size1[0] };
         // recursive sum
         while( tmpSize > local_size1[0] ){
             kernel = device_manager->GetKernel("vec.cl", "vecSum");
             arg_and_sizes.resize(0);
             arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
-            arg_and_sizes.push_back( pair<const void*, size_t>( NULL, tmpSize*sizeof(float) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
             device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
             if( tmpSize % local_size1[0] ) tmpSize = tmpSize / local_size1[0] + 1;
             else tmpSize = tmpSize / local_size1[0];
-            tmpGlobalSize = getGlobalSize( tmpSize, local_size1[0] );
+            tmpGlobalSize[0] = getGlobalSize( tmpSize, local_size1[0] );
 
             kernel = device_manager->GetKernel("vec.cl", "vecCopy");
             arg_and_sizes.resize(0);
-            arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
             device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
         }
 
+        // cout << tmpSize << endl;
+        // device_manager->ReadMemory(result.getPtr(), *d_ApP.get(), tmpSize*sizeof(float));
+        // for(size_t i = 0; i < tmpSize; ++i){
+        //     cout << result[i] << ' ';
+        // }
+
+        kernel = device_manager->GetKernel("vec.cl", "computeAlpha");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_alpha.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rsold.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
+
         // Vec<float>::add( x, x, p, 1, alpha );        // add, but alpha
         // Vec<float>::add( r, r, Ap, 1, -alpha );      // add
+        kernel = device_manager->GetKernel("vec.cl", "computeXR");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_Ap.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_alpha.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+        // device_manager->ReadMemory(result.getPtr(), *d_Ap.get(), size*sizeof(float));
+        // for(size_t i = 0; i < size; ++i){
+        //     cout << result[i] << ' ';
+        // }
+
         // rsnew = Vec<float>::dot( r, r );             // dot
+        // auto &d_sumBuffer = d_Lp;
+        kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+        tmpSize = size;
+        tmpGlobalSize[0] = global_size1[0];
+        // recursive sum
+        while( tmpSize > local_size1[0] ){
+            kernel = device_manager->GetKernel("vec.cl", "vecSum");
+            arg_and_sizes.resize(0);
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
+            device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
+
+            if( tmpSize % local_size1[0] ) tmpSize = tmpSize / local_size1[0] + 1;
+            else tmpSize = tmpSize / local_size1[0];
+            tmpGlobalSize[0] = getGlobalSize( tmpSize, local_size1[0] );
+
+            kernel = device_manager->GetKernel("vec.cl", "vecCopy");
+            arg_and_sizes.resize(0);
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
+            device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
+        }
+
+        kernel = device_manager->GetKernel("vec.cl", "computeRs");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rsold.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rsRatio.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
+
         // Vec<float>::add( p, r, p, 1, rsnew/rsold );  // add, but rsnew/rsold
         // rsold = rsnew;
+        kernel = device_manager->GetKernel("vec.cl", "computeP");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rsRatio.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
     }
 
-    // device_manager->ReadMemory(result.getPtr(), *d_H.get(), size*sizeof(float));
+    device_manager->ReadMemory(result.getPtr(), *d_x.get(), size*sizeof(float));
+    // for(size_t i = 0; i < size; ++i){
+    //     cout << result[i] << ' ';
+    // }
+    cout << endl;
 }
 
 void loadKernels()
@@ -411,6 +545,10 @@ void loadKernels()
     device_manager->GetKernel("vec.cl", "vecDivide");
     device_manager->GetKernel("vec.cl", "vecScalarMultiply");
     device_manager->GetKernel("vec.cl", "constructH");
+    device_manager->GetKernel("vec.cl", "computeAlpha");
+    device_manager->GetKernel("vec.cl", "computeXR");
+    device_manager->GetKernel("vec.cl", "computeRs");
+    device_manager->GetKernel("vec.cl", "computeP");
 
     device_manager->GetKernel("guidedfilter.cl", "boxfilter");
     device_manager->GetKernel("guidedfilter.cl", "guidedFilterRGB");
@@ -424,4 +562,16 @@ size_t getGlobalSize( int size, size_t local_size )
     if( size % local_size )
         return local_size * ( size / local_size + 1 );
     else return size;
+}
+
+void printClMemory( int size, cl_mem d )
+{
+    float *out = new float[size];
+    device_manager->ReadMemory(out, d, size*sizeof(float));
+    for(size_t i = 0; i < size; ++i){
+        cout << out[i] << ' ';
+    }
+    cout << endl;
+
+    delete [] out;
 }
