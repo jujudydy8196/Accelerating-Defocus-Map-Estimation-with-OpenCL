@@ -135,16 +135,20 @@ __kernel void constructH(
     }
 }
 
-__kernel void vecTest(
-    __global float *result,
+// size should < 1024
+__kernel void computeAlpha(
+    __global float *alpha,
+    __global const float *v,
+    __local float *buffer,
+    const float rsold,
     const int size
 )
 {
     size_t id = get_global_id(0);
-    size_t gSize = get_global_size(0);
-    size_t tmp = get_group_id(0);
 
-    if( id < size ){
-        result[id] = tmp;
+    vecSum( alpha, v, buffer, size );
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if( id == 0 ){
+        alpha[0] = rsold / alpha[0];
     }
 }

@@ -48,6 +48,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     auto d_a2 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_a3 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_b = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_dotBuffer = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     
     // write to gpu memory
     device_manager->WriteMemory( image, *d_image.get(), 3*size*sizeof(float));
@@ -356,12 +357,40 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
         // alpha = rsold / Vec<float>::dot( p, Ap );    // dot
+        auto &d_ApP = d_Hp;
+        auto &d_sumBuffer = d_Lp;
+        kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_Ap.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
         int tmpSize = size;
         size_t tmpGlobalSize = global_size1[0];
-        // recursive dot
+        // recursive sum
         while( tmpSize > local_size1[0] ){
+            kernel = device_manager->GetKernel("vec.cl", "vecSum");
+            arg_and_sizes.resize(0);
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( NULL, tmpSize*sizeof(float) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
+            device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
+            if( tmpSize % local_size1[0] ) tmpSize = tmpSize / local_size1[0] + 1;
+            else tmpSize = tmpSize / local_size1[0];
+            tmpGlobalSize = getGlobalSize( tmpSize, local_size1[0] );
+
+            kernel = device_manager->GetKernel("vec.cl", "vecCopy");
+            arg_and_sizes.resize(0);
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
+            device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
         }
+
         // Vec<float>::add( x, x, p, 1, alpha );        // add, but alpha
         // Vec<float>::add( r, r, Ap, 1, -alpha );      // add
         // rsnew = Vec<float>::dot( r, r );             // dot
@@ -374,7 +403,6 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
 void loadKernels()
 {
-    auto d_H = device_manager->AllocateMemory(CL_MEM_READ_WRITE, 200*sizeof(float));
     device_manager->GetKernel("vec.cl", "vecSum");
     device_manager->GetKernel("vec.cl", "vecCopy");
     device_manager->GetKernel("vec.cl", "vecAdd");
