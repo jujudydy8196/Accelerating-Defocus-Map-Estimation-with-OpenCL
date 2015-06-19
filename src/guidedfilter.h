@@ -37,7 +37,7 @@ public:
 	int r;
 
 	float* I;
-	float* mean;
+	float* mean_I;
 	float* invSigma;
 
 	float* N;
