@@ -228,7 +228,7 @@ void gray_guided_filter::run(const float* p, float* q) {
 	for(int i = 0; i < numPixel; ++i) {
 		cov_I_p = buffer1[i]/N[i] - mean_I[i]*mean_p[i];
 		// Eqn. (14) in the paper;
-		a1[i] = cov_I_p*invSigma[i]
+		a1[i] = cov_I_p*invSigma[i];
 		// Eqn. (15) in the paper;
 		b[i] = mean_p[i] - a1[i]*mean_I[i] ;		// b
 	}
