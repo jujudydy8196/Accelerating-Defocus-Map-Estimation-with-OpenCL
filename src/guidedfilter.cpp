@@ -205,6 +205,7 @@ guided_filter::guided_filter(const float* I_guided, const int width, const int h
 		mean_Ib[i] /= N[i];
 	}
 
+
 	//           rr, rg, rb
 	//   Sigma = rg, gg, gb
 	//           rb, gb, bb
@@ -232,6 +233,14 @@ guided_filter::guided_filter(const float* I_guided, const int width, const int h
 		Sigma.a33 += eps;
 		invSigma[i] = invMat3(Sigma);
 	}
+	ofstream outfile1("invSigma.txt");
+	for(int i = 0; i < numPixel; ++i) {
+		outfile1<<invSigma[i].a11<<" "<<invSigma[i].a12<<" "<<invSigma[i].a13<<endl;
+		outfile1<<invSigma[i].a21<<" "<<invSigma[i].a22<<" "<<invSigma[i].a23<<endl;
+		outfile1<<invSigma[i].a31<<" "<<invSigma[i].a32<<" "<<invSigma[i].a33<<endl;
+		outfile1<<endl;
+	}
+	outfile1.close();
 
 	delete [] tmp;
 	delete [] var_I_rr;

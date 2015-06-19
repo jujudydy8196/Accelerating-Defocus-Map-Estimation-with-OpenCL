@@ -1,3 +1,5 @@
+#include <iostream>
+#include <fstream>
 #ifndef GUIDED_FILTER_H
 #define GUIDED_FILTER_H
 

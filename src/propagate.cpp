@@ -62,6 +62,7 @@ void conjgrad(const Vec<float>& H, float* Hp, const LaplaMat* LM, float* Lp, con
     size_t size = estimate.getSize();
     Vec<float> r( estimate ), p( estimate ), Ap( size );
     float rsold = Vec<float>::dot( r, r ), alpha = 0.0, rsnew = 0.0;
+	cout<<"rsold "<<rsold<<endl;
     //HFilter( Hp, p.getPtr(), H, size, Hp_outfile );
     //LM->run(Lp, p.getPtr(), lambda, tmp_outfile, Lp_outfile);
     //printEstimate( r, size, outfile);

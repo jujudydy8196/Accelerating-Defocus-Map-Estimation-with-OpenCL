@@ -57,7 +57,7 @@ __kernel void guidedFilterInvMat(
     const int size
 )
 {
-    const float eps = 0.009;
+    const float eps = 0.00001;
     size_t id = get_global_id(0);
 
     if( id < size ){

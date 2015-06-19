@@ -139,6 +139,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+	//printClMemory( size, *d_gf_meanR.get());
 
     arg_and_sizes[0] = pair<const void*, size_t>( d_gf_meanG.get(), sizeof(cl_mem) );
     arg_and_sizes[1] = pair<const void*, size_t>( d_gf_G.get(), sizeof(cl_mem) );
@@ -234,6 +235,19 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_invSigma.get(), sizeof(cl_mem) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+	//debug invert Sigma
+	//float *out = new float[9*size];
+    //device_manager->ReadMemory(out, *d_gf_invSigma.get(), 9*size*sizeof(float));
+	//ofstream outfile("invSigma_cl.txt");
+	//cout<<"invSigama"<<size;
+	//for(int i = 0; i < size; ++i) {
+	//	outfile<<out[9*i  ]<<" "<<out[9*i+1]<<" "<<out[9*i+2]<<endl;
+	//	outfile<<out[9*i+3]<<" "<<out[9*i+4]<<" "<<out[9*i+5]<<endl;
+	//	outfile<<out[9*i+6]<<" "<<out[9*i+7]<<" "<<out[9*i+8]<<endl;
+	//	outfile<<endl;
+	//}
+	//outfile.close();
+	//delete [] out;
 
 	// clReleaseMemObject(d_gf_varIrr);
 	// clReleaseMemObject(d_gf_varIrg);
@@ -275,7 +289,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
-    } 
+    }
 
     kernel = device_manager->GetKernel("vec.cl", "vecSum");
     arg_and_sizes.resize(0);
@@ -284,8 +298,6 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
-    printClMemory( 1, *d_rsold.get() );
-    cout << Vec<float>::dot( de_r, de_r );
 
     // conjgrad
     float a1 = 0, a2 = 0;
@@ -597,12 +609,15 @@ size_t getGlobalSize( int size, size_t local_size )
 
 void printClMemory( int size, cl_mem d )
 {
-    float *out = new float[size];
+	float *out = new float[size];
     device_manager->ReadMemory(out, d, size*sizeof(float));
+	// ofstream outfile("check_Ir_cl.txt");
     for(size_t i = 0; i < size; ++i){
         cout << out[i] << ' ';
+		//outfile<<out[i]<<' ';
     }
     cout << endl;
+	//outfile.close();
 
     delete [] out;
 }
