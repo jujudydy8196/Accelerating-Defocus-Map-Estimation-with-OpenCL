@@ -194,7 +194,7 @@ gray_guided_filter::gray_guided_filter(const float* I_guided, const int width, c
 
 	for(int i = 0; i < numPixel; ++i) {
 		invSigma[i] = 1.0/float(var_I[i]/N[i] - mean_I[i]*mean_I[i]);
-		cout << invSigma[i] << " ";
+		// cout << invSigma[i] << " ";
  	}
 
 	delete [] tmp;

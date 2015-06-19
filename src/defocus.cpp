@@ -133,9 +133,9 @@ void defocusEstimation(float* I, float* edge, float* out, float std, float lamda
 
 	write( out, width, height, "sparse.pgm" );
 
-	// for(size_t i = 0; i < height * width; ++i ){
-	// 	out[i] = uchar( sparse[i] );
-	// }
+	for(size_t i = 0; i < height * width; ++i ){
+		cout << out[i] <<" ";
+	}
 
 	delete [] gRatio;
 	// delete [] sparse;
