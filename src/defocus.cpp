@@ -1,5 +1,6 @@
 #include "defocus.h"
 #include "fileIO.h"
+#include "guidedfilter.h"
 
 void defocusEstimation(float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
