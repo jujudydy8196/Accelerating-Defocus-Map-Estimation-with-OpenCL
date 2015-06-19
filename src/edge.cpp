@@ -11,7 +11,7 @@ void canny(float *image, int rows, int cols, float sigma,
              *delta_x,        /* The first devivative image, x-direction. */
              *delta_y,        /* The first derivative image, y-direction. */
              *magnitude;      /* The magnitude of the gadient image.      */
-   int r, c, pos;
+   // int r, c, pos;
    float *dir_radians=NULL;   /* Gradient direction image.                */
 
    /****************************************************************************
@@ -504,9 +504,9 @@ void non_max_supp(short *mag, short *gradx, short *grady, int nrows, int ncols, 
 void apply_hysteresis(short int *mag, float *nms, int rows, int cols,
 	float tlow, float thigh, float *edge)
 {
-   int r, c, pos, numedges, lowcount, highcount, lowthreshold, highthreshold,
-       i, hist[32768], rr, cc;
-   short int maximum_mag, sumpix;
+   int r, c, pos, numedges, highcount, lowthreshold, highthreshold,
+      hist[32768];
+   short int maximum_mag;
 
    /****************************************************************************
    * Initialize the edge map to possible edges everywhere the non-maximal
@@ -603,7 +603,7 @@ void follow_edges(float *edgemapptr, short *edgemagptr, short lowval, int cols)
    short *tempmagptr;
    float *tempmapptr;
    int i;
-   float thethresh;
+   // float thethresh;
    int x[8] = {1,1,0,-1,-1,-1,0,1},
        y[8] = {0,1,1,1,0,-1,-1,-1};
 

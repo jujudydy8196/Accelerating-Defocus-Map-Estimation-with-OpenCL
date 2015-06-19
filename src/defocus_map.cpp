@@ -1,7 +1,9 @@
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <glog/logging.h>
 #include <gflags/gflags.h>
+#include <ctime>
 #include <CL/cl.h>
 #include "fileIO.h"
 #include "edge.h"
@@ -22,6 +24,7 @@ void InitOpenCL(size_t id);
 DeviceManager *device_manager;
 
 int main(int argc, char** argv) {
+    clock_t start, stop;
     
     if(argc !=5) {
         cout << "Usage: defocus_map <original image> <lambda> <radius> <gradient_descent[1] / filtering[2] / opencl[3]>" << endl;
@@ -86,9 +89,23 @@ int main(int argc, char** argv) {
     imageFloat2Uchar(I_sparse2, I_ori2_uchar, numPixel);
     writePGM(I_ori2_uchar, width, height,"sparse2.pgm");
     Vec<float> result( numPixel );
+    start = clock();
     if(mode==1) propagate( I_ori, I_sparse2, width, height, lambda, r, result );
     else if(mode==2) propagate2( I_ori, I_sparse, width, height, lambda, r, result );
     else if(mode==3) propagatecl( I_ori, I_sparse2, width, height, lambda, r, result );
+    stop = clock();
+
+    cout << "propagate time: " << double(stop - start) / CLOCKS_PER_SEC <<endl; 
+    
+    ofstream timelog;
+    timelog.open("time.txt", ios::app);
+    if (mode==1) 
+        timelog << "propagate time: " ;
+    else if (mode==3)
+        timelog << "cl_propagate time: " ;
+    timelog << double(stop - start) / CLOCKS_PER_SEC <<endl;
+    timelog.close();
+
     imageFloat2Uchar( result.getPtr(), I_out, numPixel );
     writePGM(I_out, width, height, "check_result.pgm");
     

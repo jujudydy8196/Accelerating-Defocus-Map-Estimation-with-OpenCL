@@ -251,6 +251,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
+    //printClMemory( size, *d_rr.get() );
+
     int tmpSize = size;
     size_t tmpGlobalSize[1] = { global_size1[0] };
     // recursive sum
