@@ -239,6 +239,7 @@ void gray_guided_filter::run(const float* p, float* q) {
 	// Eqn. (16) in the paper;
 	for(int i = 0; i < numPixel; ++i) {
 		q[i] = (buffer1[i]*I[i] + tmp[i])/N[i];
+		cout << buffer1[i] << " * " << I[i] << " + " <<tmp[i] << " / " << N[i] << endl;
 	}
 
 	delete [] mean_p;

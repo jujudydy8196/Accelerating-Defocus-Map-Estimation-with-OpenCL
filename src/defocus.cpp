@@ -128,14 +128,18 @@ void defocusEstimation(float* I, float* edge, float* out, float std, float lamda
 
 	write( out, width, height, "tempsparse.pgm" );
 
+	// for(size_t i = 0; i < height * width; ++i ){
+		// cout << out[i] <<" ";
+	// }
+
     gray_guided_filter gf (out, width, height, 15, 0.00001);
     gf.run(out,out);
 
 	write( out, width, height, "sparse.pgm" );
 
-	for(size_t i = 0; i < height * width; ++i ){
-		cout << out[i] <<" ";
-	}
+	// for(size_t i = 0; i < height * width; ++i ){
+	// 	cout << out[i] <<" ";
+	// }
 
 	delete [] gRatio;
 	// delete [] sparse;
