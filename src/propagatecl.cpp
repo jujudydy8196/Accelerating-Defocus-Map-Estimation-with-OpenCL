@@ -1,4 +1,5 @@
 #include "propagatecl.h"
+#include "propagate.h"
 #include "cl_helper.h"
 #include "global.h"
 #include "vec.h"
@@ -56,10 +57,37 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     // reference
     auto &d_rr = d_Hp;
     
+    // use for debug
+    Vec<float> estimate( size );//, x( size );
+    Vec<float> H( size );
+    float* Hp = new float[size];
+    float* Lp = new float[size];
+    LaplaMat* LM = new LaplaMat(image, w, h, radius);
+    constructEstimate( estimatedBlur, estimate );
+    constructH( estimatedBlur, H, size);
+    Vec<float> de_r( estimate ), de_p( estimate ), de_Ap( size ), de_x(size);
+    float de_rsold = Vec<float>::dot( de_r, de_r ), de_alpha = 0.0, de_rsnew = 0.0;
+
+        /*
+        HFilter( Hp, de_p.getPtr(), H, size);
+        LM->run(Lp, de_p.getPtr(), lambda);
+        getAp( de_Ap.getPtr(), Hp, Lp, size);
+        de_alpha = de_rsold / Vec<float>::dot( de_p, de_Ap );
+        Vec<float>::add( de_x, de_x, de_p, 1, de_alpha );
+        Vec<float>::add( de_r, de_r, de_Ap, 1, -de_alpha );
+        de_rsnew = Vec<float>::dot( de_r, de_r );
+        if( rsnew < 1e-10 ) break;
+        Vec<float>::add( de_p, de_r, de_p, 1, de_rsnew/de_rsold );
+        de_rsold = de_rsnew;
+        */
+
+
     // write to gpu memory
     device_manager->WriteMemory( image, *d_image.get(), 3*size*sizeof(float));
     device_manager->WriteMemory( estimatedBlur, *d_r.get(), size*sizeof(float));
     device_manager->WriteMemory( estimatedBlur, *d_p.get(), size*sizeof(float));
+
+    compareMemory(size, de_r.getPtr(), *d_r.get());
 
     // decalre some variable
     cl_kernel kernel = device_manager->GetKernel("vec.cl", "constructH");
@@ -223,8 +251,6 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
-    printClMemory( size, *d_rr.get() );
-
     int tmpSize = size;
     size_t tmpGlobalSize[1] = { global_size1[0] };
     // recursive sum
@@ -243,12 +269,11 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
         kernel = device_manager->GetKernel("vec.cl", "vecCopy");
         arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
     } 
-    printClMemory( tmpSize, *d_rr.get() );
 
     kernel = device_manager->GetKernel("vec.cl", "vecSum");
     arg_and_sizes.resize(0);
@@ -258,6 +283,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
     printClMemory( 1, *d_rsold.get() );
+    cout << Vec<float>::dot( de_r, de_r );
 
     // conjgrad
     float a1 = 0, a2 = 0;
@@ -271,6 +297,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+        HFilter( Hp, de_p.getPtr(), H, size);
+        compareMemory( size, Hp, *d_Hp.get() );
 
         // LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
@@ -436,8 +465,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
             kernel = device_manager->GetKernel("vec.cl", "vecCopy");
             arg_and_sizes.resize(0);
-            arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
             device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
         }
@@ -502,8 +531,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
             kernel = device_manager->GetKernel("vec.cl", "vecCopy");
             arg_and_sizes.resize(0);
-            arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
             device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
         }
@@ -528,11 +557,11 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
     }
 
+    // printClMemory( size, *d_x.get() );
     device_manager->ReadMemory(result.getPtr(), *d_x.get(), size*sizeof(float));
-    // for(size_t i = 0; i < size; ++i){
-    //     cout << result[i] << ' ';
-    // }
-    cout << endl;
+    delete [] Hp;
+    delete [] Lp;
+    delete LM;
 }
 
 void loadKernels()
@@ -574,4 +603,17 @@ void printClMemory( int size, cl_mem d )
     cout << endl;
 
     delete [] out;
+}
+
+void compareMemory( int size, float* cpp, cl_mem d )
+{
+    float *cl = new float[size];
+    int errorCount = 0;
+    device_manager->ReadMemory(cl, d, size*sizeof(float));
+    for(size_t i = 0; i < size; ++i){
+        if( cl[i] != cpp[i] ) ++errorCount;
+    }
+    cout << errorCount << " / " << size << endl;
+
+    delete [] cl;
 }

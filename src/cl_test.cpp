@@ -178,6 +178,43 @@ void testVec()
     }
 }
 
+void testSum()
+{
+    int size = 2048;
+    float *a = new float[size];
+    for( size_t i = 0; i < size; ++i ){
+        a[i] = i;
+    }
+
+    auto d_a = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_b = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    device_manager->WriteMemory(a, *d_a.get(), size*sizeof(float));
+    
+    const size_t local_size[1] = { 1024 };
+    size_t global_size[1] = { 2048 };
+
+    cl_kernel kernel = device_manager->GetKernel("vec.cl", "vecSum");
+    vector<pair <const void*, size_t> > arg_and_sizes;
+
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_b.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_a.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size[0]*sizeof(float) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size, NULL, local_size );
+
+    printClMemory( size, *d_a.get() );
+    printClMemory( 2, *d_b.get() );
+
+    size = 2;
+    arg_and_sizes[0] = pair<const void*, size_t>( d_a.get(), sizeof(cl_mem) );
+    arg_and_sizes[1] = pair<const void*, size_t>( d_b.get(), sizeof(cl_mem) );
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size, NULL, local_size );
+    printClMemory( 2, *d_b.get() );
+    printClMemory( 1, *d_a.get() );
+
+    delete [] a;
+}
+
 int main( int argc, char** argv )
 {
     InitGoogleLogging(argv[0]);

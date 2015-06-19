@@ -34,7 +34,6 @@ __kernel void vecCopy(
 )
 {
     size_t id = get_global_id(0);
-    size_t gSize = get_global_size(0);
 
     if( id < size ){
         v2[id] = v1[id];
