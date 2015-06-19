@@ -3,6 +3,7 @@
 #include "cl_helper.h"
 #include "global.h"
 #include "vec.h"
+#include <cmath>
 
 void propagatecl( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t r, Vec<float>& result )
 {
@@ -242,6 +243,31 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 	// clReleaseMemObject(d_gf_varIgb);
 	// clReleaseMemObject(d_gf_varIbb);
     
+    // check gf
+    cout << "gf\n";
+    compareMemory( size, LM->_gf->Ir, *d_gf_R.get() );
+    compareMemory( size, LM->_gf->Ig, *d_gf_G.get() );
+    compareMemory( size, LM->_gf->Ib, *d_gf_B.get() );
+    Vec<float> v_tmp( LM->_gf->mean_Ib, size );
+    // Vec<float> v_N( LM->_gf->N, size );
+    // Vec<float>::divide( v_tmp, v_tmp, v_N );
+    // for( size_t i = 0 )
+    compareMemory( size, v_tmp.getPtr(), *d_gf_meanB.get(), 0.01 );
+    float *de_inv = new float[9*size];
+    float de_tmp = 0.01;
+    int errorCount = 0, warningCount = 0;
+    device_manager->ReadMemory(de_inv, *d_gf_invSigma, 9*size*sizeof(float));
+    for(size_t i = 0; i < size; ++i){
+        if( de_inv[9*i] == LM->_gf->invSigma->a11 ) ;
+        else if( fabs( de_inv[9*i] - LM->_gf->invSigma->a11 ) <= de_tmp) warningCount++;
+        else {
+            errorCount++;
+            cout << LM->_gf->invSigma[i].a11 << ' ' << de_inv[9*i] << endl;
+        }
+    }
+    cout << errorCount << " / " << warningCount << " / " << size << endl;
+    delete [] de_inv;
+    
     // initialize rsold
     kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
     arg_and_sizes.resize(0);
@@ -429,6 +455,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
+        LM->run(Lp, de_p.getPtr(), lambda);
+        // compareMemory( size, Lp, *d_Lp.get() );
+
         // getAp( Ap.getPtr(), Hp, Lp, size);           // Ap = Hp + Lp
         kernel = device_manager->GetKernel("vec.cl", "vecAdd");
         arg_and_sizes.resize(0);
@@ -607,15 +636,20 @@ void printClMemory( int size, cl_mem d )
     delete [] out;
 }
 
-void compareMemory( int size, float* cpp, cl_mem d )
+void compareMemory( int size, float* cpp, cl_mem d, float threshold )
 {
     float *cl = new float[size];
-    int errorCount = 0;
+    int errorCount = 0, warningCount = 0;
     device_manager->ReadMemory(cl, d, size*sizeof(float));
     for(size_t i = 0; i < size; ++i){
-        if( cl[i] != cpp[i] ) ++errorCount;
+        if( cpp[i] == cl[i] ) continue;
+        else if( fabs(cl[i] - cpp[i]) <= threshold ) ++warningCount;
+        else{
+            cout << cpp[i] << ' ' << cl[i] << endl;
+            ++errorCount;
+        }
     }
-    cout << errorCount << " / " << size << endl;
+    cout << errorCount << " / " << warningCount << " / " << size << endl;
 
     delete [] cl;
 }
