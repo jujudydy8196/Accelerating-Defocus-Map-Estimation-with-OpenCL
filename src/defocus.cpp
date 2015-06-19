@@ -29,7 +29,7 @@ void defocusEstimation(float* I, float* edge, float* out, float std, float lamda
 	filter(gimx,gx1,I,width,height,w);
 	imageInfo( gimx, width*height );
 	// writeDiff( gimx, width, height, "gimx.pgm" );	
-  float* gimy = new float[width*height];
+    float* gimy = new float[width*height];
 	filter(gimy,gy1,I,width,height,w);
 	imageInfo( gimy, width*height );
 	// writeDiff( gimy, width, height, "gimy.pgm" );	
@@ -124,6 +124,11 @@ void defocusEstimation(float* I, float* edge, float* out, float std, float lamda
 	}	
 	sparseScale(out,maxBlur,height*width);
 	imageInfo( out, width*height );
+
+	write( out, width, height, "tempsparse.pgm" );
+
+    guided_filter gf (out, width, height, 15, 0.00001);
+    gf.run(out,out);
 
 	write( out, width, height, "sparse.pgm" );
 
