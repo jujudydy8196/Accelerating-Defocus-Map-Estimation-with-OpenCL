@@ -90,12 +90,15 @@ int main(int argc, char** argv) {
     writePGM(I_ori2_uchar, width, height,"sparse2.pgm");
     Vec<float> result( numPixel );
     start = clock();
+    
     if(mode==1) propagate( I_ori, I_sparse2, width, height, lambda, r, result );
     else if(mode==2) propagate2( I_ori, I_sparse, width, height, lambda, r, result );
     else if(mode==3) propagatecl( I_ori, I_sparse2, width, height, lambda, r, result );
+    
     stop = clock();
 
     cout << "propagate time: " << double(stop - start) / CLOCKS_PER_SEC <<endl; 
+    
     
     ofstream timelog;
     timelog.open("time.txt", ios::app);
@@ -105,6 +108,7 @@ int main(int argc, char** argv) {
         timelog << "cl_propagate time: " ;
     timelog << double(stop - start) / CLOCKS_PER_SEC <<endl;
     timelog.close();
+    
 
     imageFloat2Uchar( result.getPtr(), I_out, numPixel );
     writePGM(I_out, width, height, "check_result.pgm");
