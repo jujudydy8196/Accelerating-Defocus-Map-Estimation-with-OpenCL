@@ -40,6 +40,20 @@ __kernel void vecCopy(
     }
 }
 
+// v1[i] = c
+__kernel void vecCopyConstant(
+    __global float *v,
+    const float c,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+
+    if( id < size ){
+        v[id] = c;
+    }
+}
+
 // result = a1 * v1 + a2 * v2;
 __kernel void vecScalarAdd(
     __global float *result,

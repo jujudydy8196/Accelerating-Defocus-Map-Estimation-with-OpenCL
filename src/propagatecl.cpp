@@ -292,6 +292,15 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
     //printClMemory( size, *d_rr.get() );
+    
+    // initialize x
+    float fzero = 0;
+    kernel = device_manager->GetKernel("vec.cl", "vecCopyConstant");
+    arg_and_sizes.resize(0);
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &fzero, sizeof(float) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );    
 
     int tmpSize = size;
     size_t tmpGlobalSize[1] = { global_size1[0] };
@@ -327,7 +336,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
     // conjgrad
     float a1 = 0, a2 = 0;
-    for( size_t i = 0; i < 1; ++i ){
+    for( size_t i = 0; i < 1000; ++i ){
         cout << i << "\n";
         // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
@@ -541,45 +550,49 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
         de_alpha = de_rsold / Vec<float>::dot( de_p, de_Ap );    // dot
-		//alpha debugged
-    	//float *cl = new float[1];
-    	//device_manager->ReadMemory(cl, *d_alpha.get(), sizeof(float));
-		//cout<<"Compare alpha:"<<endl;
-		//cout<<"cpp alpha: "<<de_alpha<<" cl alpha: "<<cl[0]<<endl; 
-		//delete [] cl;
+		// alpha debugged
+    	float *cl = new float[1];
+    	device_manager->ReadMemory(cl, *d_alpha.get(), sizeof(float));
+		// cout<<"Compare alpha:"<<endl;
+		// cout<<"cpp alpha: "<<de_alpha<<" cl alpha: "<<cl[0]<<endl; 
+		delete [] cl;
 
         // Vec<float>::add( x, x, p, 1, alpha );        // add, but alpha
         // Vec<float>::add( r, r, Ap, 1, -alpha );      // add
-        //kernel = device_manager->GetKernel("vec.cl", "computeXR");
-        //arg_and_sizes.resize(0);
-        //arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
-        //arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
-        //arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
-        //arg_and_sizes.push_back( pair<const void*, size_t>( d_Ap.get(), sizeof(cl_mem) ) );
-        //arg_and_sizes.push_back( pair<const void*, size_t>( d_alpha.get(), sizeof(cl_mem) ) );
-        //arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
-        //arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
-        //device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-		//cout<<"check alph[0]: ";
-		//printClMemory(1, *d_tmp.get());
-       
-        kernel = device_manager->GetKernel("vec.cl", "vecScalarAdd");
-	    arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
+        kernel = device_manager->GetKernel("vec.cl", "computeXR");
+        arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
-		int one = 1;
-        arg_and_sizes.push_back( pair<const void*, size_t>( &one, sizeof(int) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &de_alpha, sizeof(float) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_Ap.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_alpha.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+		// cout<<"check alph[0]: ";
+		// printClMemory(1, *d_tmp.get());
+    
+        // compareMemory(size, de_x.getPtr(), *d_x.get());
+        // compareMemory(size, de_p.getPtr(), *d_p.get(), 0.01);
+
+       
+  //       kernel = device_manager->GetKernel("vec.cl", "vecScalarAdd");
+	 //    arg_and_sizes.resize(0);
+  //       arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
+  //       arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
+  //       arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
+		// int one = 1;
+  //       arg_and_sizes.push_back( pair<const void*, size_t>( &one, sizeof(int) ) );
+  //       arg_and_sizes.push_back( pair<const void*, size_t>( &de_alpha, sizeof(float) ) );
+  //       arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+  //       device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
 		Vec<float>::add( de_x, de_x, de_p, 1, de_alpha );        // add, but alpha
         Vec<float>::add( de_r, de_r, de_Ap, 1, -de_alpha );      // add
-		cout<<"Compare X:"<<endl;
-		compareMemory(size, de_x.getPtr(), *d_x.get());
-		//compareMemory(size, de_r.getPtr(), *d_r.get());
-		cout<<"Compare X:"<<endl;
+		// cout<<"Compare X:"<<endl;
+        // compareMemory(size, de_x.getPtr(), *d_x.get(), 0.01);
+		// compareMemory(size, de_r.getPtr(), *d_r.get(), 0.01);
+		// cout<<"Compare X:"<<endl;
 
 
         // device_manager->ReadMemory(result.getPtr(), *d_Ap.get(), size*sizeof(float));
@@ -652,6 +665,7 @@ void loadKernels()
 {
     device_manager->GetKernel("vec.cl", "vecSum");
     device_manager->GetKernel("vec.cl", "vecCopy");
+    device_manager->GetKernel("vec.cl", "vecCopyConstant");
     device_manager->GetKernel("vec.cl", "vecAdd");
     device_manager->GetKernel("vec.cl", "vecScalarAdd");
     device_manager->GetKernel("vec.cl", "vecMultiply");
@@ -701,7 +715,7 @@ void compareMemory( int size, float* cpp, cl_mem d, float threshold )
         if( cpp[i] == cl[i] ) continue;
         else if( fabs(cl[i] - cpp[i]) <= threshold ) ++warningCount;
         else{
-            cout << cpp[i] << ' ' << cl[i] << endl;
+            cout << i << " : " << cpp[i] << ' ' << cl[i] << endl;
             ++errorCount;
         }
     }
