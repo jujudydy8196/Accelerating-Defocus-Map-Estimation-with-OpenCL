@@ -5,7 +5,7 @@
 void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
 
-	// write( edge, width, height, "edge.pgm" );
+	write( edge, width, height, "1edge.pgm" );
 
 	float std1= std;
 	float std2= std1 * 1.5;
@@ -132,7 +132,7 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 		// cout << out[i] <<" ";
 	// }
 
-    guided_filter gf (I_rgb, width, height, 5, 0.00001);
+    guided_filter gf (I_rgb, width, height, 2, 0.00001);
     gf.run(out,out);
 
 	write( out, width, height, "sparse.pgm" );
