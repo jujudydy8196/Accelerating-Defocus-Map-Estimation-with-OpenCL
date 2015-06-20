@@ -2,7 +2,7 @@
 #include "fileIO.h"
 #include "guidedfilter.h"
 
-void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height) {
+void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height, int blur) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
 
 	write( edge, width, height, "1edge.pgm" );
@@ -126,16 +126,14 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 	sparseScale(out,maxBlur,height*width);
 	imageInfo( out, width*height );
 
-	write( out, width, height, "tempsparse.pgm" );
-
-	// for(size_t i = 0; i < height * width; ++i ){
-		// cout << out[i] <<" ";
-	// }
-
+  if (blur == 2)
+		write( out, width, height, "sparse.pgm" );
+	else if ( blur == 1) {
+		write( out, width, height, "no_blur_sparse.pgm" );
     guided_filter gf (I_rgb, width, height, 2, 0.00001);
     gf.run(out,out);
-
-	write( out, width, height, "sparse.pgm" );
+		write( out, width, height, "sparse.pgm" );
+	}
 
 	// for(size_t i = 0; i < height * width; ++i ){
 	// 	cout << out[i] <<" ";

@@ -13,8 +13,8 @@ void imageUchar2Float( uchar* uImage, float* fImage, const int size );
 
 
 int main(int argc, char** argv) {
-	if(argc !=2) {
-	    cout << "Usage: sparse_map <original image> " << endl;
+	if(argc !=3) {
+	    cout << "Usage: sparse_map <original image> <1:blur after sparse/ 2:no blur>" << endl;
 	    return -1;
 	}
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     imageGray( I_ori, I_gray, numPixel );
 
     canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
-    defocusEstimation(I_ori,I_gray, I_edge, I_sparse, 1.0, 0.001, 3, width, height) ;
+    defocusEstimation(I_ori,I_gray, I_edge, I_sparse, 1.0, 0.001, 3, width, height,atoi(argv[2])) ;
 
 
 }
