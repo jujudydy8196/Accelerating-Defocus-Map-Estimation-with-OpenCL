@@ -126,7 +126,7 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 	sparseScale(out,maxBlur,height*width);
 	imageInfo( out, width*height );
 
-//	write( out, width, height, "tempsparse.pgm" );
+	write( out, width, height, "tempsparse.pgm" );
 
 	// for(size_t i = 0; i < height * width; ++i ){
 		// cout << out[i] <<" ";
