@@ -317,6 +317,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         lmStart = clock();
         startT(1);
         startT(3);
+        startT(7);
         // LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
         //       boxfilter
@@ -330,6 +331,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         // startT(2);
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
         // endT(2);
+        endT(7);
 
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
@@ -353,6 +355,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
         // endT(2);
 
+        startT(7);
         kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
@@ -375,6 +378,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         // startT(2);
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
         // endT(2);
+        endT(7);
         endT(3);
         startT(4);
         kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterComputeAB");
@@ -396,6 +400,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
         // endT(2);
 
+        startT(7);
         kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
@@ -425,6 +430,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
         // endT(2);
         
+        endT(7);
         endT(4);
         startT(5);
 
@@ -636,6 +642,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     printT(5);
     cout << "lm part\n";
     printT(6);
+    cout << "box\n";
+    printT(7);
 
     /*
     stop = clock();
