@@ -132,7 +132,7 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 		// cout << out[i] <<" ";
 	// }
 
-    guided_filter gf (I_rgb, width, height, 15, 0.00001);
+    guided_filter gf (I_rgb, width, height, 5, 0.00001);
     gf.run(out,out);
 
 	write( out, width, height, "sparse.pgm" );
