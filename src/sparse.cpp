@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     imageGray( I_ori, I_gray, numPixel );
 
     canny(I_gray, height, width, 1.2, 0.5, 0.8, &I_edge, "test");
-    defocusEstimation(I_gray, I_edge, I_sparse, 1.0, 0.001, 3, width, height) ;
+    defocusEstimation(I_ori,I_gray, I_edge, I_sparse, 1.0, 0.001, 3, width, height) ;
 
 
 }

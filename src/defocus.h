@@ -5,7 +5,7 @@
 using namespace std;
 typedef unsigned char uchar;
 
-void defocusEstimation(float* I, float* edge, float*, float std, float lamda, float maxBlur, int width, int height);
+void defocusEstimation(float* I_rgb,float* I, float* edge, float*, float std, float lamda, float maxBlur, int width, int height);
 void g1x(float* g, int* x, int* y, float std, int w);
 void g1y(float* g, int* x, int* y, float std, int w);
 void filter(float* gim, float* g , float* I, int width, int height, int w);

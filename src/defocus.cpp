@@ -2,7 +2,7 @@
 #include "fileIO.h"
 #include "guidedfilter.h"
 
-void defocusEstimation(float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height) {
+void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
 
 	// write( edge, width, height, "edge.pgm" );
@@ -132,7 +132,7 @@ void defocusEstimation(float* I, float* edge, float* out, float std, float lamda
 		// cout << out[i] <<" ";
 	// }
 
-    guided_filter gf (I, width, height, 15, 0.00001);
+    guided_filter gf (I_rgb, width, height, 15, 0.00001);
     gf.run(out,out);
 
 	write( out, width, height, "sparse.pgm" );
