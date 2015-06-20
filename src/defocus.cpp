@@ -1,8 +1,11 @@
 #include "defocus.h"
 #include "fileIO.h"
+#include "guidedfilter.h"
 
-void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda, float maxBlur, int width, int height) {
+void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
+
+	// write( edge, width, height, "edge.pgm" );
 
 	float std1= std;
 	float std2= std1 * 1.5;
@@ -26,11 +29,11 @@ void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda
 	float* gimx = new float[width*height];
 	filter(gimx,gx1,I,width,height,w);
 	imageInfo( gimx, width*height );
-	writeDiff( gimx, width, height, "gimx.pgm" );	
-  float* gimy = new float[width*height];
+	// writeDiff( gimx, width, height, "gimx.pgm" );	
+    float* gimy = new float[width*height];
 	filter(gimy,gy1,I,width,height,w);
 	imageInfo( gimy, width*height );
-	writeDiff( gimy, width, height, "gimy.pgm" );	
+	// writeDiff( gimy, width, height, "gimy.pgm" );	
 	float* mg1 = new float[width*height];
 	for (int i=0; i<height; i++) {
 		for (int j=0; j<width; j++) {
@@ -38,7 +41,7 @@ void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda
 		}
 	}
 	imageInfo( mg1, width*height );
-	write( mg1, width, height, "mg1.pgm" );	
+	// write( mg1, width, height, "mg1.pgm" );	
 	delete []x1;
 	delete []y1;
 	delete []gx1;
@@ -67,11 +70,11 @@ void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda
 	float* gimx2 = new float[width*height];
 	filter(gimx2,gx2,I,width,height,w2);
 	imageInfo( gimx2, width*height );
-	writeDiff( gimx2, width, height, "gimx2.pgm" );		
+	// writeDiff( gimx2, width, height, "gimx2.pgm" );		
 	float* gimy2 = new float[width*height];
 	filter(gimy2,gy2,I,width,height,w2);
 	imageInfo( gimy2, width*height );
-	writeDiff( gimy2, width, height, "gimy2.pgm" );		
+	// writeDiff( gimy2, width, height, "gimy2.pgm" );		
 	float* mg2 = new float[width*height];
 	for (int i=0; i<height; i++) {
 		for (int j=0; j<width; j++) {
@@ -79,7 +82,7 @@ void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda
 		}
 	}		
 	imageInfo( mg2, width*height );
-	write( mg2, width, height, "mg2.pgm" );	
+	// write( mg2, width, height, "mg2.pgm" );	
 
 	delete []x2;
 	delete []y2;
@@ -88,7 +91,7 @@ void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda
 	delete []gimx2;
 	delete []gimy2;	
 
-	cout << "gRatio" << endl;
+	// cout << "gRatio" << endl;
 	float* gRatio = new float[width*height];
 	for (int i=0; i<height; i++) {
 		for (int j=0; j<width; j++) {
@@ -100,41 +103,52 @@ void defocusEstimation(uchar* I, uchar* edge, uchar* out, float std, float lamda
 		}
 	}
 	imageInfo( gRatio, width*height );
-	write( gRatio, width, height, "gRatio.pgm" );	
+	// write( gRatio, width, height, "gRatio.pgm" );	
 
 	delete []mg1;
 	delete []mg2;
-	float* sparse = new float[width*height];
+	// float* sparse = new float[width*height];
 	for (int i=0; i<height; i++) {
 		for (int j=0; j<width; j++) {
 			if (edge[i*width+j] != 0 ) {
 
-				if (gRatio[i*width+j]>1.01){ // && (1.0-pow(gRatio[i*width+j],2))>0 ) {
-					sparse[i*width+j] = sqrt((pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2)));
+				if (gRatio[i*width+j]>1.01  && (pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2))>0 ) {
+					out[i*width+j] = sqrt((pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2)));
 			}
 				else
-					sparse[i*width+j] = 0;
+					out[i*width+j] = 0;
 			}
 			else
-				sparse[i*width+j] = 0;
+				out[i*width+j] = 0;
+			// cout << out[i*width+j] << " " << (pow(gRatio[i*width+j],2)*pow(std1,2)-pow(std2,2))/(1.0-pow(gRatio[i*width+j],2)) << endl;
 		}
 	}	
-	sparseScale(sparse,maxBlur,height*width);
-	write( sparse, width, height, "sparse.pgm" );
+	sparseScale(out,maxBlur,height*width);
+	imageInfo( out, width*height );
 
-	for(size_t i = 0; i < height * width; ++i ){
-		out[i] = uchar( sparse[i] );
-	}
+	write( out, width, height, "tempsparse.pgm" );
+
+	// for(size_t i = 0; i < height * width; ++i ){
+		// cout << out[i] <<" ";
+	// }
+
+    guided_filter gf (I_rgb, width, height, 15, 0.00001);
+    gf.run(out,out);
+
+	write( out, width, height, "sparse.pgm" );
+
+	// for(size_t i = 0; i < height * width; ++i ){
+	// 	cout << out[i] <<" ";
+	// }
 
 	delete [] gRatio;
-	delete [] sparse;
+	// delete [] sparse;
 }
 void sparseScale(float* I, int maxBlur, size_t size) {
-	float max = I[0];
 	for( size_t i = 1; i < size; ++i ){
 		if( I[i] > maxBlur )
 			I[i] = maxBlur;
-		I[i] = I[i] / maxBlur * 255.0;
+		I[i] = I[i] / maxBlur ;//* 255.0;
 	}
 }
 void g1x(float* g, int* x, int* y, float std, int w) {
@@ -150,7 +164,7 @@ void g1y(float* g, int* x, int* y, float std, int w) {
 }
 
 
-void filter(float* gim, float* g , uchar* I, int width, int height, int w) {
+void filter(float* gim, float* g , float* I, int width, int height, int w) {
 	for( size_t i = 0; i < width * height; ++i ){
 		gim[i] = 0;
 	}
@@ -193,7 +207,7 @@ void writeDiff( const float* I, size_t w, size_t h, char* str )
 	uchar* out = new uchar[size];
 	for (size_t i = 0; i < size; ++i)
 	{
-		out[i] = uchar((I[i]+128));//uchar( I[i]/270*128 + 128 );
+		out[i] = uchar((I[i]*255+128));//uchar( I[i]/270*128 + 128 );
 	}
     writePGM(out,w,h,str);
     delete [] out;
@@ -205,7 +219,8 @@ void write( const float* I, size_t w, size_t h, char* str )
 	uchar* out = new uchar[size];
 	for (size_t i = 0; i < size; ++i)
 	{
-		out[i] = uchar((I[i]));//uchar( I[i]/270*128 + 128 );
+		// cout << I[i] << endl;
+		out[i] = uchar((I[i]*255));//uchar( I[i]/270*128 + 128 );
 	}
     writePGM(out,w,h,str);
     delete [] out;

@@ -186,13 +186,17 @@ cl_kernel DeviceManager::GetKernel(const string &program_name, const string &ker
 		);
 		CHECK_EQ(result, CL_SUCCESS) << clewErrorString(result);
 		result = clBuildProgram(program.program_, 1, &device_, nullptr, nullptr, nullptr);
+		// CHECK_EQ(result, CL_SUCCESS) << clewErrorString(result);
+		
 		cl_build_status bresult;
 		result = clGetProgramBuildInfo(
 			program.program_, device_, CL_PROGRAM_BUILD_STATUS,
 			sizeof(cl_build_status), &bresult, nullptr
 		);
+		CHECK_EQ(result, CL_SUCCESS) << clewErrorString(result);
+
 		if (bresult != CL_BUILD_SUCCESS) {
-			char compile_message[1024];
+			char compile_message[1024*64];
 			result = clGetProgramBuildInfo(
 				program.program_, device_, CL_PROGRAM_BUILD_LOG,
 				sizeof(compile_message), compile_message, nullptr

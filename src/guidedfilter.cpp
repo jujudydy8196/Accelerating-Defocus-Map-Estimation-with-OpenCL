@@ -1,5 +1,6 @@
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 #include "guidedfilter.h"
 using namespace std;
 
@@ -164,8 +165,90 @@ Matrix3f invMat3(Matrix3f& A) {
 	return invA;
 }
 
+gray_guided_filter::gray_guided_filter(const float* I_guided, const int width, const int height, const int radius, const float eps) {
 
-guided_filter::guided_filter(const uchar* I_guided, const int width, const int height, const int radius, const float eps) {
+	numPixel = width*height;
+	_width = width;
+	_height = height;
+	r = radius;
+	I = new float[numPixel];
+	mean_I = new float[numPixel];
+	N = new float[numPixel];
+	invSigma = new float[numPixel];
+
+	float* tmp = new float[numPixel];
+	float* var_I = new float[numPixel];
+
+	for(int i = 0; i < numPixel; ++i) {
+		I[i] = (I_guided[i]);
+		tmp[i] = 1;
+	}
+
+	boxfilter(tmp, N, width, height, r);
+	boxfilter(I, mean_I, width, height, r);
+	for(int i = 0; i < numPixel; ++i) {
+		mean_I[i] /= N[i];
+	}
+
+	for(int i = 0; i < numPixel; ++i) {	tmp[i] = I[i]*I[i]; }	boxfilter(tmp, var_I, width, height, r);
+
+	for(int i = 0; i < numPixel; ++i) {
+		invSigma[i] = 1.0/float(var_I[i]/N[i] - mean_I[i]*mean_I[i]);
+		// cout << invSigma[i] << " ";
+ 	}
+
+	delete [] tmp;
+	delete [] var_I;
+}
+
+
+gray_guided_filter::~gray_guided_filter() {
+	delete [] I;
+	delete [] mean_I;
+	delete [] invSigma;
+	delete [] N;
+}
+
+void gray_guided_filter::run(const float* p, float* q) {
+
+	float* mean_p = new float[numPixel];
+	float* buffer1 = new float[numPixel];
+	float* tmp = new float[numPixel];
+	float* a1 = new float[numPixel];
+	float* b = new float[numPixel];
+
+	float cov_I_p;
+
+	boxfilter(p, mean_p, _width, _height, r);
+	for(int i = 0; i < numPixel; ++i) {	mean_p[i] /= N[i]; }
+
+	// mean_Ic_p, c = {r, g, b}
+	for(int i = 0; i < numPixel; ++i) {	tmp[i] = I[i]*p[i]; }	boxfilter(tmp, buffer1, _width, _height, r);
+	// cov_Ic_p, c = {r, g, b}
+	for(int i = 0; i < numPixel; ++i) {
+		cov_I_p = buffer1[i]/N[i] - mean_I[i]*mean_p[i];
+		// Eqn. (14) in the paper;
+		a1[i] = cov_I_p*invSigma[i];
+		// Eqn. (15) in the paper;
+		b[i] = mean_p[i] - a1[i]*mean_I[i] ;		// b
+	}
+
+	boxfilter(a1, buffer1, _width, _height, r);
+	boxfilter(b, tmp, _width, _height, r);
+
+	// Eqn. (16) in the paper;
+	for(int i = 0; i < numPixel; ++i) {
+		q[i] = (buffer1[i]*I[i] + tmp[i])/N[i];
+		cout << buffer1[i] << " * " << I[i] << " + " <<tmp[i] << " / " << N[i] << endl;
+	}
+
+	delete [] mean_p;
+	delete [] buffer1;
+	delete [] tmp;
+	delete [] a1;
+	delete [] b;
+}
+guided_filter::guided_filter(const float* I_guided, const int width, const int height, const int radius, const float eps) {
 	
 	numPixel = width*height;
 	_width = width;
@@ -189,9 +272,9 @@ guided_filter::guided_filter(const uchar* I_guided, const int width, const int h
 	float* var_I_bb = new float[numPixel];
 
 	for(int i = 0; i < numPixel; ++i) {
-		Ir[i] = float(I_guided[3*i  ])/255.f;
-		Ig[i] = float(I_guided[3*i+1])/255.f;
-		Ib[i] = float(I_guided[3*i+2])/255.f;
+		Ir[i] = (I_guided[3*i  ]);
+		Ig[i] = (I_guided[3*i+1]);
+		Ib[i] = (I_guided[3*i+2]);
 		tmp[i] = 1;
 	}
 
@@ -204,6 +287,7 @@ guided_filter::guided_filter(const uchar* I_guided, const int width, const int h
 		mean_Ig[i] /= N[i];
 		mean_Ib[i] /= N[i];
 	}
+
 
 	//           rr, rg, rb
 	//   Sigma = rg, gg, gb
@@ -232,6 +316,14 @@ guided_filter::guided_filter(const uchar* I_guided, const int width, const int h
 		Sigma.a33 += eps;
 		invSigma[i] = invMat3(Sigma);
 	}
+	ofstream outfile1("invSigma.txt");
+	for(int i = 0; i < numPixel; ++i) {
+		outfile1<<invSigma[i].a11<<" "<<invSigma[i].a12<<" "<<invSigma[i].a13<<endl;
+		outfile1<<invSigma[i].a21<<" "<<invSigma[i].a22<<" "<<invSigma[i].a23<<endl;
+		outfile1<<invSigma[i].a31<<" "<<invSigma[i].a32<<" "<<invSigma[i].a33<<endl;
+		outfile1<<endl;
+	}
+	outfile1.close();
 
 	delete [] tmp;
 	delete [] var_I_rr;
