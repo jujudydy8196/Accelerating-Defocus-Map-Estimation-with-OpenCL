@@ -69,7 +69,7 @@ void conjgrad(const Vec<float>& H, float* Hp, const LaplaMat* LM, float* Lp, con
     //getAp( Ap.getPtr(), Hp, Lp, size, w, Ap_outfile );
     //outfile.close();
 
-    for( size_t i = 0; i < 1; ++i ){
+    for( size_t i = 0; i < 1000; ++i ){
         // Ap = A * p
         cout << i << ' ' << rsold << endl;
         HFilter( Hp, p.getPtr(), H, size);

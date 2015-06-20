@@ -207,7 +207,7 @@ __kernel void computeRs(
 __kernel void computeP(
     __global float *p,
     __global const float *r,
-    __global float *rsRatio,
+    __global const float *rsRatio,
     const int size
 )
 {

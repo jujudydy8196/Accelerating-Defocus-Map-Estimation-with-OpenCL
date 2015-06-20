@@ -53,7 +53,7 @@ public:
 	~guided_filter();
 	void run(const float* input, float* output);
 	void run_mask(float* input, float* output, uchar* mask);
-// private:
+private:
 	int _width;
 	int _height;
 	int numPixel;
