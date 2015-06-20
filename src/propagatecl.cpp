@@ -336,7 +336,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
     // conjgrad
     float a1 = 0, a2 = 0;
-    for( size_t i = 0; i < 1000; ++i ){
+    for( size_t i = 0; i < 1; ++i ){
         cout << i << "\n";
         // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
@@ -643,6 +643,15 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
+        de_rsnew = Vec<float>::dot( de_r, de_r );
+        cout << "rs: " << de_rsnew/de_rsold << "\n";
+        printClMemory(1, *d_rsRatio.get());
+
+        Vec<float>::add( de_p, de_r, de_p, 1, de_rsnew/de_rsold );
+        de_rsold = de_rsnew;
+        cout << de_rsold << ' ';
+        printClMemory(1, *d_rsold.get());
+
         // Vec<float>::add( p, r, p, 1, rsnew/rsold );  // add, but rsnew/rsold
         // rsold = rsnew;
         kernel = device_manager->GetKernel("vec.cl", "computeP");
@@ -652,9 +661,10 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rsRatio.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+        compareMemory(size, de_p.getPtr(), *d_p.get(), 0.01);
     }
 
-    // printClMemory( size, *d_x.get() );
     device_manager->ReadMemory(result.getPtr(), *d_x.get(), size*sizeof(float));
     delete [] Hp;
     delete [] Lp;
