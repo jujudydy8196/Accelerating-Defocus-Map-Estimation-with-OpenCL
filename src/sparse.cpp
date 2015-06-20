@@ -1,9 +1,15 @@
+
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
+
 #include <iostream>
 #include "fileIO.h"
 #include "edge.h"
 #include "defocus.h"
 
 using namespace std;
+using namespace cv;
 
 typedef unsigned char uchar;
 
@@ -40,7 +46,8 @@ int main(int argc, char** argv) {
 
     imageGray( I_ori, I_gray, numPixel );
 
-    canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
+    // canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
+    Canny(I_gray,I_edge,0.5,0.8);
     defocusEstimation(I_ori,I_gray, I_edge, I_sparse, 1.0, 0.001, 3, width, height,atoi(argv[2])) ;
 
 
