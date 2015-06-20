@@ -111,6 +111,17 @@ int main(int argc, char** argv) {
     
 
     imageFloat2Uchar( result.getPtr(), I_out, numPixel );
+	//debug result
+	//ofstream outfile("check_result_cl.txt");
+	int count = 0;
+	for(int i = 0; i < numPixel; ++i) {
+		if((int)I_out[i]) {
+			//cout<<"non zero "<<(int)I_out[i]<<" ";
+			count++;
+			//outfile<<(int)I_out[i]<< " ";
+		}
+	}
+	cout<<"# non zero "<<count<<endl;
     writePGM(I_out, width, height, "check_result.pgm");
     
     delete [] I_ori;

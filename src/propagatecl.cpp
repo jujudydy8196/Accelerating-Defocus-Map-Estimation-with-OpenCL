@@ -3,6 +3,7 @@
 #include "cl_helper.h"
 #include "global.h"
 #include "vec.h"
+#include <cmath>
 
 void propagatecl( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t r, Vec<float>& result )
 {
@@ -87,7 +88,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     device_manager->WriteMemory( estimatedBlur, *d_r.get(), size*sizeof(float));
     device_manager->WriteMemory( estimatedBlur, *d_p.get(), size*sizeof(float));
 
-    compareMemory(size, de_r.getPtr(), *d_r.get());
+    //compareMemory(size, de_r.getPtr(), *d_r.get());
 
     // decalre some variable
     cl_kernel kernel = device_manager->GetKernel("vec.cl", "constructH");
@@ -256,6 +257,31 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 	// clReleaseMemObject(d_gf_varIgb);
 	// clReleaseMemObject(d_gf_varIbb);
     
+    // check gf
+    //cout << "gf\n";
+//    compareMemory( size, LM->_gf->Ir, *d_gf_R.get() );
+//    compareMemory( size, LM->_gf->Ig, *d_gf_G.get() );
+//    compareMemory( size, LM->_gf->Ib, *d_gf_B.get() );
+//    Vec<float> v_tmp( LM->_gf->mean_Ib, size );
+    // Vec<float> v_N( LM->_gf->N, size );
+    // Vec<float>::divide( v_tmp, v_tmp, v_N );
+    // for( size_t i = 0 )
+//    compareMemory( size, v_tmp.getPtr(), *d_gf_meanB.get(), 0.01 );
+//    float *de_inv = new float[9*size];
+//    float de_tmp = 0.01;
+//    int errorCount = 0, warningCount = 0;
+//    device_manager->ReadMemory(de_inv, *d_gf_invSigma, 9*size*sizeof(float));
+//    for(size_t i = 0; i < size; ++i){
+//        if( de_inv[9*i] == LM->_gf->invSigma->a11 ) ;
+//        else if( fabs( de_inv[9*i] - LM->_gf->invSigma->a11 ) <= de_tmp) warningCount++;
+//        else {
+//            errorCount++;
+//            cout << LM->_gf->invSigma[i].a11 << ' ' << de_inv[9*i] << endl;
+//        }
+//  }
+//    cout << errorCount << " / " << warningCount << " / " << size << endl;
+//    delete [] de_inv;
+    
     // initialize rsold
     kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
     arg_and_sizes.resize(0);
@@ -313,7 +339,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
         HFilter( Hp, de_p.getPtr(), H, size);
-        compareMemory( size, Hp, *d_Hp.get() );
+        //compareMemory( size, Hp, *d_Hp.get() );
 
         // LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
@@ -382,7 +408,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanR.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanG.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanR.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanB.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_meanP.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) ) );
@@ -433,6 +459,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         a2 = -a1;
         kernel = device_manager->GetKernel("vec.cl", "vecScalarAdd");
         arg_and_sizes.resize(0);
+		//(lamda*r*r)(I-L)p = a1*p - a2*Lp
         arg_and_sizes.push_back( pair<const void*, size_t>( d_Lp.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_Lp.get(), sizeof(cl_mem) ) );
@@ -440,6 +467,11 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &a2, sizeof(float) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+		//LM debugged
+        LM->run(Lp, de_p.getPtr(), lambda);
+		//cout<<"LaplaMatrix compare: "<<endl;
+        //compareMemory( size, Lp, *d_Lp.get() );
 
         // getAp( Ap.getPtr(), Hp, Lp, size);           // Ap = Hp + Lp
         kernel = device_manager->GetKernel("vec.cl", "vecAdd");
@@ -450,16 +482,25 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
+		//Ap debugged, difference can be ignored??
+        getAp( de_Ap.getPtr(), Hp, Lp, size);           // Ap = Hp + Lp
+		//cout<<"Ap compare: "<<endl;
+        //compareMemory( size, de_Ap.getPtr(), *d_Ap.get(), 0.02 );
+		//cout<<"Ap compare: "<<endl;
+		
+
         // alpha = rsold / Vec<float>::dot( p, Ap );    // dot
         auto &d_ApP = d_Hp;
         auto &d_sumBuffer = d_Lp;
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
+
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_Ap.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
 
         int tmpSize = size;
         size_t tmpGlobalSize[1] = { global_size1[0] };
@@ -499,18 +540,47 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rsold.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
+        de_alpha = de_rsold / Vec<float>::dot( de_p, de_Ap );    // dot
+		//alpha debugged
+    	//float *cl = new float[1];
+    	//device_manager->ReadMemory(cl, *d_alpha.get(), sizeof(float));
+		//cout<<"Compare alpha:"<<endl;
+		//cout<<"cpp alpha: "<<de_alpha<<" cl alpha: "<<cl[0]<<endl; 
+		//delete [] cl;
 
         // Vec<float>::add( x, x, p, 1, alpha );        // add, but alpha
         // Vec<float>::add( r, r, Ap, 1, -alpha );      // add
-        kernel = device_manager->GetKernel("vec.cl", "computeXR");
-        arg_and_sizes.resize(0);
+        //kernel = device_manager->GetKernel("vec.cl", "computeXR");
+        //arg_and_sizes.resize(0);
+        //arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
+        //arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
+        //arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
+        //arg_and_sizes.push_back( pair<const void*, size_t>( d_Ap.get(), sizeof(cl_mem) ) );
+        //arg_and_sizes.push_back( pair<const void*, size_t>( d_alpha.get(), sizeof(cl_mem) ) );
+        //arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
+        //arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+        //device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+		//cout<<"check alph[0]: ";
+		//printClMemory(1, *d_tmp.get());
+       
+        kernel = device_manager->GetKernel("vec.cl", "vecScalarAdd");
+	    arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_x.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_Ap.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_alpha.get(), sizeof(cl_mem) ) );
+		int one = 1;
+        arg_and_sizes.push_back( pair<const void*, size_t>( &one, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &de_alpha, sizeof(float) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+		Vec<float>::add( de_x, de_x, de_p, 1, de_alpha );        // add, but alpha
+        Vec<float>::add( de_r, de_r, de_Ap, 1, -de_alpha );      // add
+		cout<<"Compare X:"<<endl;
+		compareMemory(size, de_x.getPtr(), *d_x.get());
+		//compareMemory(size, de_r.getPtr(), *d_r.get());
+		cout<<"Compare X:"<<endl;
+
 
         // device_manager->ReadMemory(result.getPtr(), *d_Ap.get(), size*sizeof(float));
         // for(size_t i = 0; i < size; ++i){
@@ -622,15 +692,20 @@ void printClMemory( int size, cl_mem d )
     delete [] out;
 }
 
-void compareMemory( int size, float* cpp, cl_mem d )
+void compareMemory( int size, float* cpp, cl_mem d, float threshold )
 {
     float *cl = new float[size];
-    int errorCount = 0;
+    int errorCount = 0, warningCount = 0;
     device_manager->ReadMemory(cl, d, size*sizeof(float));
     for(size_t i = 0; i < size; ++i){
-        if( cl[i] != cpp[i] ) ++errorCount;
+        if( cpp[i] == cl[i] ) continue;
+        else if( fabs(cl[i] - cpp[i]) <= threshold ) ++warningCount;
+        else{
+            cout << cpp[i] << ' ' << cl[i] << endl;
+            ++errorCount;
+        }
     }
-    cout << errorCount << " / " << size << endl;
+    cout << errorCount << " / " << warningCount << " / " << size << endl;
 
     delete [] cl;
 }

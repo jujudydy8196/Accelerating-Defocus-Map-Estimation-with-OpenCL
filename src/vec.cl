@@ -158,10 +158,12 @@ __kernel void computeXR(
     __global float *r,
     __global const float *Ap,
     __global float *alpha,
+	__global float *check,
     const int size
 )
 {
     size_t id = get_global_id(0);
+	if(id==0) check[0] = alpha[0];
 
     vecScalarAdd( x, x, p, 1, alpha[0], size );
     vecScalarAdd( r, r, Ap, 1, -alpha[0], size );
