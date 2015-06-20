@@ -4,6 +4,7 @@
 #include "global.h"
 #include "vec.h"
 #include <cmath>
+#include <ctime>
 
 void propagatecl( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t r, Vec<float>& result )
 {
@@ -11,6 +12,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
     int size = w * h;
     int width = w, height = h, radius = r;
+    clock_t start, stop;
 
     // allocate gpu memory
     auto d_image = device_manager->AllocateMemory(CL_MEM_READ_ONLY, 3*size*sizeof(float));
@@ -59,9 +61,12 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     auto &d_rr = d_Hp;
 
     // write to gpu memory
+    start = clock();
     device_manager->WriteMemory( image, *d_image.get(), 3*size*sizeof(float));
     device_manager->WriteMemory( estimatedBlur, *d_r.get(), size*sizeof(float));
     device_manager->WriteMemory( estimatedBlur, *d_p.get(), size*sizeof(float));
+    stop = clock();
+    cout << "write memory time: " << double( stop - start ) / CLOCKS_PER_SEC << endl;
 
     // decalre some variable
     cl_kernel kernel = device_manager->GetKernel("vec.cl", "constructH");
@@ -78,6 +83,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     cout << w << ' ' << global_size2[0] << endl;
     cout << h << ' ' << global_size2[1] << endl;
     
+    start = clock();
     // constructH
     arg_and_sizes.push_back( pair<const void*, size_t>( d_H.get(), sizeof(cl_mem) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( d_r.get(), sizeof(cl_mem) ) );
@@ -257,11 +263,21 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
+    stop = clock();
+    cout << "init time: " << double( stop - start ) / CLOCKS_PER_SEC << endl;
+
+    start = clock();
+
     // conjgrad
+    clock_t lmStart;
+    double lmCount = 0;
+    double dotTime = 0;
+    double elseTime = 0;
     float a1 = 0, a2 = 0;
     for( size_t i = 0; i < 1000; ++i ){
-        cout << i << "\n";
+        // cout << i << "\n";
         // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
+        lmStart = clock();
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_Hp.get(), sizeof(cl_mem) ) );
@@ -269,7 +285,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+        // elseTime += double( clock() - lmStart );
 
+        lmStart = clock();
         // LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
         //       boxfilter
@@ -397,6 +415,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
+        lmCount += double( clock() - lmStart );
+        lmStart = clock();
         // getAp( Ap.getPtr(), Hp, Lp, size);           // Ap = Hp + Lp
         kernel = device_manager->GetKernel("vec.cl", "vecAdd");
         arg_and_sizes.resize(0);
@@ -405,8 +425,10 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_Lp.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+        // elseTime += double( clock() - lmStart );
 
         // alpha = rsold / Vec<float>::dot( p, Ap );    // dot
+        lmStart = clock();
         auto &d_ApP = d_Hp;
         auto &d_sumBuffer = d_Lp;
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
@@ -451,6 +473,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
+        dotTime += double( clock() - lmStart );
+        lmStart = clock();
+
         // Vec<float>::add( x, x, p, 1, alpha );        // add, but alpha
         // Vec<float>::add( r, r, Ap, 1, -alpha );      // add
         kernel = device_manager->GetKernel("vec.cl", "computeXR");
@@ -463,9 +488,11 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+        // elseTime += double( clock() - lmStart );
 
         // rsnew = Vec<float>::dot( r, r );             // dot
         // auto &d_sumBuffer = d_Lp;
+        lmStart = clock();
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
@@ -506,6 +533,13 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
+        dotTime += double( clock() - lmStart );
+
+        lmStart = clock();
+        //float rsold;
+        //device_manager->ReadMemory(&rsold, *d_rsold.get(), sizeof(float));
+        elseTime += double( clock() - lmStart );
+        //if( rsold < 1e-10  ) break;
 
         // Vec<float>::add( p, r, p, 1, rsnew/rsold );  // add, but rsnew/rsold
         // rsold = rsnew;
@@ -516,9 +550,20 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rsRatio.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+        //printClMemory( 1, *d_rsold.get() );
     }
 
+    stop = clock();
+    cout << "conjgrad time: " << double( stop - start ) / CLOCKS_PER_SEC << endl;
+    cout << "lm time: " << lmCount / CLOCKS_PER_SEC << endl;
+    cout << "dot time: " << dotTime / CLOCKS_PER_SEC << endl;
+    cout << "else time: " << elseTime / CLOCKS_PER_SEC << endl;
+
+    start = clock();
     device_manager->ReadMemory(result.getPtr(), *d_x.get(), size*sizeof(float));
+    stop = clock();
+    cout << "read time: " << double( stop - start ) / CLOCKS_PER_SEC << endl;
 }
 
 void loadKernels()
