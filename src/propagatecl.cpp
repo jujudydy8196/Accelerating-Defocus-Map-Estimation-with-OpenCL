@@ -4,6 +4,7 @@
 #include "global.h"
 #include "vec.h"
 #include <cmath>
+#include <ctime>
 
 void propagatecl( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t r, Vec<float>& result )
 {
