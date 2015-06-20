@@ -80,6 +80,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     auto d_dotBuffer = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     // reference
     auto &d_rr = d_Hp;
+    auto &d_rp = d_gf_Irr;
+    auto &d_gp = d_gf_Irg;
+    auto &d_bp = d_gf_Irb;
 
     // write to gpu memory
     start = clock();
@@ -329,7 +332,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rp.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_R.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
@@ -337,10 +340,22 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
         // endT(2);
 
+        arg_and_sizes[0] = pair<const void*, size_t>( d_gp.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_gf_G.get(), sizeof(cl_mem) );
+        // startT(2);
+        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+        // endT(2);
+
+        arg_and_sizes[0] = pair<const void*, size_t>( d_bp.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_gf_B.get(), sizeof(cl_mem) );
+        // startT(2);
+        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+        // endT(2);
+
         kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rp.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
@@ -348,44 +363,14 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
         // endT(2);
 
-        kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
-        arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_G.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
-        // startT(2);
-        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-        // endT(2);
-
-        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
-        arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
+        arg_and_sizes[0] = pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_gp.get(), sizeof(cl_mem) );
         // startT(2);
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
         // endT(2);
 
-        kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
-        arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_B.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
-        // startT(2);
-        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-        // endT(2);
-
-        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
-        arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_varBP.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
+        arg_and_sizes[0] = pair<const void*, size_t>( d_varBP.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_bp.get(), sizeof(cl_mem) );
         // startT(2);
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
         // endT(2);
