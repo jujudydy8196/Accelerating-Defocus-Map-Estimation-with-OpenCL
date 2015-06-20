@@ -144,5 +144,3 @@ __kernel void guidedFilterRunResult(
     }
 }
 
-
-

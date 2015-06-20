@@ -1,6 +1,7 @@
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 #include <CL/cl.h>
+#include <ctime>
 #include "cl_helper.h"
 #include "propagatecl.h"
 using namespace google;
@@ -215,6 +216,43 @@ void testSum()
     delete [] a;
 }
 
+void testTime(){
+    int size = 1024*1024;
+    float *a = new float[size];
+    for( size_t i = 0; i < size; ++i ){
+        a[i] = i;
+    }
+    clock_t start, stop;
+
+    auto d_a = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_b = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    device_manager->WriteMemory(a, *d_a.get(), size*sizeof(float));
+    
+    const size_t local_size[1] = { 1024 };
+    size_t global_size[1] = { size };
+
+    start = clock();
+    cl_kernel kernel = device_manager->GetKernel("vec.cl", "vecAdd");
+    vector<pair <const void*, size_t> > arg_and_sizes;
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_b.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_a.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_a.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+    for(size_t i = 0; i < 10; ++i){
+        device_manager->Call( kernel, arg_and_sizes, 1, global_size, NULL, local_size );
+    }
+    device_manager->ReadMemory(a, *d_b.get(), size*sizeof(float));
+    cout << double( clock() - start ) / CLOCKS_PER_SEC << endl;
+
+    kernel = device_manager->GetKernel("vec.cl", "vecTest");
+    start = clock();
+    device_manager->Call( kernel, arg_and_sizes, 1, global_size, NULL, local_size );
+    device_manager->ReadMemory(a, *d_b.get(), size*sizeof(float));
+    cout << double( clock() - start ) / CLOCKS_PER_SEC << endl;
+
+    delete [] a;
+}
+
 int main( int argc, char** argv )
 {
     InitGoogleLogging(argv[0]);
@@ -224,7 +262,8 @@ int main( int argc, char** argv )
     //test();
     // testVec();
     loadKernels();
-    testSum();
+    // testSum();
+    testTime();
 
     return 0;
 }

@@ -287,3 +287,10 @@ void DeviceManager::Call(
 	result = clEnqueueNDRangeKernel( command_queue_, kernel, dim, nullptr, global_dim, local_dim, 0, nullptr, nullptr );
 	CHECK_EQ(result, CL_SUCCESS) << clewErrorString(result);
 }
+
+void DeviceManager::Finish()
+{
+	cl_int result;
+	result = clFinish( command_queue_ );
+	CHECK_EQ(result, CL_SUCCESS) << clewErrorString(result);
+}

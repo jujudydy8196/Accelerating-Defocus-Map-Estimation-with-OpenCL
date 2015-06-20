@@ -46,4 +46,5 @@ public:
 		const vector<pair<const void*, size_t>> &arg_and_sizes,
 		const cl_uint dim, const size_t *global_dim, const size_t *offset, const size_t *local_dim
 	);
+	void Finish();
 };
