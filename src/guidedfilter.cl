@@ -143,3 +143,6 @@ __kernel void guidedFilterRunResult(
         q[id] = Ir[id]*meanA1[id] + Ig[id]*meanA2[id] + Ib[id]*meanA3[id] + meanB[id];
     }
 }
+
+
+
