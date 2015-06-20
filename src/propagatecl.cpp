@@ -536,10 +536,10 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         dotTime += double( clock() - lmStart );
 
         lmStart = clock();
-        //float rsold;
-        //device_manager->ReadMemory(&rsold, *d_rsold.get(), sizeof(float));
+        float rsold;
+        device_manager->ReadMemory(&rsold, *d_rsold.get(), sizeof(float));
         elseTime += double( clock() - lmStart );
-        //if( rsold < 1e-10  ) break;
+        if( rsold < 1e-10  ) break;
 
         // Vec<float>::add( p, r, p, 1, rsnew/rsold );  // add, but rsnew/rsold
         // rsold = rsnew;

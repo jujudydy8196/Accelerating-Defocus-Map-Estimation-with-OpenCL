@@ -1,0 +1,2 @@
+cl_propagate time: 20.4501
+cl_propagate time: 18.0524
