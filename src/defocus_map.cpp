@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     readPPM(I_ori_uchar, argv[1]);
     imageUchar2Float( I_ori_uchar, I_ori, n );
 
-    readPGM(I_sparse_uchar, "./sparse_boy.pgm"); 
+    readPGM(I_sparse_uchar, "./sparse.pgm"); 
     imageUchar2Float( I_sparse_uchar, I_sparse2, numPixel );
     // imageFloat2Uchar( I_sparse, I_out, numPixel );
 
