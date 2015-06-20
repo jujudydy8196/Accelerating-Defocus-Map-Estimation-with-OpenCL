@@ -6,6 +6,27 @@
 #include <cmath>
 #include <ctime>
 
+clock_t timeStart[10];
+double  totalTime[10];
+inline void startT( size_t id = 0 )
+{
+    device_manager->Finish();
+    timeStart[id] = clock();
+}
+inline void endT( size_t id = 0 )
+{
+    device_manager->Finish();
+    totalTime[id] += clock() - timeStart[id];
+}
+inline void printT( size_t id = 0 )
+{
+    cout << totalTime[id] / CLOCKS_PER_SEC << endl;
+}
+inline void resetT( size_t id = 0 )
+{
+    totalTime[id] = 0;
+}
+
 void propagatecl( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t r, Vec<float>& result )
 {
     loadKernels();
@@ -274,10 +295,11 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     double dotTime = 0;
     double elseTime = 0;
     float a1 = 0, a2 = 0;
+    startT();
     for( size_t i = 0; i < 1000; ++i ){
         // cout << i << "\n";
         // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
-        lmStart = clock();
+        // lmStart = clock();
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_Hp.get(), sizeof(cl_mem) ) );
@@ -553,6 +575,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
         //printClMemory( 1, *d_rsold.get() );
     }
+    endT();
+    printT();
 
     stop = clock();
     cout << "conjgrad time: " << double( stop - start ) / CLOCKS_PER_SEC << endl;
