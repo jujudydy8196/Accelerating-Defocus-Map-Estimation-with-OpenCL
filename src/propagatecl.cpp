@@ -620,7 +620,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     cout << "lm\n";
     printT(1);
     cout << "call\n";
-    printT(1);
+    printT(2);
 
     /*
     stop = clock();
