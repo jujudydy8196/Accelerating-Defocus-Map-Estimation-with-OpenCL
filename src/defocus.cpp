@@ -1,5 +1,6 @@
 #include "defocus.h"
 #include "fileIO.h"
+#include "guidedfilter.h"
 
 void defocusEstimation(float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
@@ -127,13 +128,17 @@ void defocusEstimation(float* I, float* edge, float* out, float std, float lamda
 
 //	write( out, width, height, "tempsparse.pgm" );
 
-//    guided_filter gf (out, width, height, 15, 0.00001);
-//    gf.run(out,out);
+	// for(size_t i = 0; i < height * width; ++i ){
+		// cout << out[i] <<" ";
+	// }
+
+    gray_guided_filter gf (out, width, height, 15, 0.00001);
+    gf.run(out,out);
 
 	write( out, width, height, "sparse.pgm" );
 
 	// for(size_t i = 0; i < height * width; ++i ){
-	// 	out[i] = uchar( sparse[i] );
+	// 	cout << out[i] <<" ";
 	// }
 
 	delete [] gRatio;

@@ -24,6 +24,26 @@ public:
 };
 
 Matrix3f invMat3(Matrix3f& A);
+//Gray guided filter
+class gray_guided_filter
+{
+public:
+	gray_guided_filter(const float* I_guided, const int width, const int height, const int radius, const float eps);
+	~gray_guided_filter();
+	// void run_mask(float* input, float* output, uchar* mask);
+	void run(const float* input, float* output);
+
+	int _width;
+	int _height;
+	int numPixel;
+	int r;
+
+	float* I;
+	float* mean_I;
+	float* invSigma;
+
+	float* N;
+};
 
 // Guided filter
 class guided_filter
