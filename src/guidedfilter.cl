@@ -62,7 +62,7 @@ __kernel void boxfilterCumulateY(
     const int r
 )
 {
-    size_t id = get_global_id(0);
+    size_t id = get_global_id(0); // x
 
     if( id < width ){
         int sum = image[id];
@@ -105,7 +105,7 @@ __kernel void boxfilterCumulateX(
         int sum = image[beginX];
         cumulate[beginX] = sum;
 
-        for( int index = beginX; index < beginX+width; ++index ){
+        for( int index = beginX+1; index < beginX+width; ++index ){
             sum += image[index];
             cumulate[index] = sum;
         }

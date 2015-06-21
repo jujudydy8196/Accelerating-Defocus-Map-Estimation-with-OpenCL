@@ -1,7 +1,28 @@
 #include "propagate.h"
 
+clock_t cppTimeStart[10];
+double  cppTotalTime[10];
+inline void startC( size_t id = 0 )
+{
+            cppTimeStart[id] = clock();
+}
+inline void endC( size_t id = 0 )
+{
+            cppTotalTime[id] += clock() - cppTimeStart[id];
+}
+inline void printC( size_t id = 0 )
+{
+        cout << cppTotalTime[id] / CLOCKS_PER_SEC << endl;
+}
+inline void resetC( size_t id = 0 )
+{
+        cppTotalTime[id] = 0;
+}
+
 void propagate( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t radius, Vec<float>& result )
 {
+    startC();
+    startC(1);
     size_t size = w * h;
 
     for(size_t i = 0; i < size; ++i){
@@ -16,12 +37,37 @@ void propagate( const float* image, const float* estimatedBlur, const size_t w, 
     LaplaMat* LM = new LaplaMat(image, w, h, radius);
     constructEstimate( estimatedBlur, estimate );
     constructH( estimatedBlur, H, size);
+
+    endC(1);
+    startC(2);
     conjgrad( H, Hp, LM, Lp, estimate, result, w, h, lambda );
+    endC(2);
     // vecFloat2uchar( x, result );
 
     delete [] Hp;
     delete [] Lp;
     delete LM;
+
+    endC();
+
+    cout << "total: ";
+    printC();
+    cout << "init: ";
+    printC(1);
+    cout << "conjgrad: ";
+    printC(2);
+    cout << "H: ";
+    printC(3);
+    cout << "L: ";
+    printC(4);
+    cout << "alpha: ";
+    printC(5);
+    cout << "x r: ";
+    printC(6);
+    cout << "rs: ";
+    printC(7);
+    cout << "p: ";
+    printC(8);
 }
 
 void constructH( const float* estimatedBlur, Vec<float>& H, const size_t numPixel) {
@@ -72,18 +118,30 @@ void conjgrad(const Vec<float>& H, float* Hp, const LaplaMat* LM, float* Lp, con
     for( size_t i = 0; i < 1000; ++i ){
         // Ap = A * p
         cout << i << ' ' << rsold << endl;
+        startC(3);
         HFilter( Hp, p.getPtr(), H, size);
+        endC(3);
+        startC(4);
         // lambda_LFilter( L, image, p.getPtr(), h, w, lambda, radius );
         LM->run(Lp, p.getPtr(), lambda);
+        endC(4);
+        startC(5);
         getAp( Ap.getPtr(), Hp, Lp, size);
         alpha = rsold / Vec<float>::dot( p, Ap );
+        endC(5);
+        startC(6);
         Vec<float>::add( x, x, p, 1, alpha );
         Vec<float>::add( r, r, Ap, 1, -alpha );
+        endC(6);
+        startC(7);
         rsnew = Vec<float>::dot( r, r );
+        endC(7);
         if( rsnew < 1e-10 ) break;
         // printP(p, size, p_outfile);
+        startC(8);
         Vec<float>::add( p, r, p, 1, rsnew/rsold );
         rsold = rsnew;
+        endC(8);
     }
     
 }
