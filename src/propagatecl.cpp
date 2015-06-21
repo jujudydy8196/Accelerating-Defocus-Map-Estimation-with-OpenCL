@@ -4,28 +4,28 @@
 #include "global.h"
 #include "vec.h"
 #include <cmath>
-//#include <ctime>
+#include <ctime>
 
-//clock_t timeStart[10];
-//double  totalTime[10];
-//inline void startT( size_t id = 0 )
-//{
-    //device_manager->Finish();
-    //timeStart[id] = clock();
-//}
-//inline void endT( size_t id = 0 )
-//{
-    //device_manager->Finish();
-    //totalTime[id] += clock() - timeStart[id];
-//}
-//inline void printT( size_t id = 0 )
-//{
-    //cout << totalTime[id] / CLOCKS_PER_SEC << endl;
-//}
-//inline void resetT( size_t id = 0 )
-//{
-    //totalTime[id] = 0;
-//}
+clock_t timeStart[10];
+double  totalTime[10];
+inline void startT( size_t id = 0 )
+{
+    device_manager->Finish();
+    timeStart[id] = clock();
+}
+inline void endT( size_t id = 0 )
+{
+    device_manager->Finish();
+    totalTime[id] += clock() - timeStart[id];
+}
+inline void printT( size_t id = 0 )
+{
+    cout << totalTime[id] / CLOCKS_PER_SEC << endl;
+}
+inline void resetT( size_t id = 0 )
+{
+    totalTime[id] = 0;
+}
 
 void propagatecl( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t r, Vec<float>& result )
 {
@@ -116,7 +116,6 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     auto d_box_tmp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_box_buffer = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     float one = 1;
-    LaplaMat* LM = new LaplaMat(image, w, h, radius);
 
     kernel = device_manager->GetKernel("vec.cl", "vecCopyConstant");
     arg_and_sizes.resize(0);
@@ -125,6 +124,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
+    startT();
+    for( int i = 0; i < 100; ++i ){
     kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
     arg_and_sizes.resize(0);
     arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
@@ -146,8 +147,22 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
-
-    compareMemory( size, LM->_gf->N, *d_ones.get()  );
+    }
+    endT();
+    cout << "new ";
+    printT();
+    resetT();
+    startT();
+    for( int i = 0; i < 100; ++i){
+    kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
+    arg_and_sizes.resize(0);
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_ones.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+    }
 
     kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
     arg_and_sizes.resize(0);
