@@ -59,12 +59,12 @@ int main(int argc, char** argv) {
 		//cvtColor(I_cv,I_gray_cv,CV_BGR2GRAY);
 		//
 
-		//start = clock();
+		start = clock();
 		canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
-		//stop = clock();
+		stop = clock();
 		
-		//cout << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
-		//timelog << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
+		cout << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
+		timelog << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
 
 		//for (int i=0; i<numPixel; i++)
 				//if (I_edge[i]!=0) cout << I_edge[i] << " " ;
