@@ -9,3 +9,4 @@ canny detection time: 0.053435
 defocus Estimation time: 0.708848
 defocus Estimation time: 0.713802
 cl_propagate time: 4.15604
+defocus Estimation time: 0.713829
