@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
     float* I_ori = NULL;
     float* I_gray = NULL;
     float* I_edge = NULL;
+    float* I_edge_mat = NULL;
     int width, height, numPixel, n;
 
     sizePGM(width, height, argv[1]);
@@ -40,6 +41,7 @@ int main(int argc, char** argv) {
     I_sparse = new float[numPixel];
     I_gray = new float[numPixel];
     I_edge = new float[numPixel];
+    I_edge_mat = new float[numPixel];
     I_ori = new float[n];
     I_ori_uchar = new uchar[n];
     I_edge_uchar = new uchar[numPixel];
@@ -58,16 +60,28 @@ int main(int argc, char** argv) {
 		//
 
 		//start = clock();
-		//canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
+		canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
 		//stop = clock();
 		
 		//cout << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
 		//timelog << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
 
-		readPPM(I_edge_uchar, "testedge.ppm");
-		imageUchar2Float( I_edge_uchar, I_edge, n );
+		//for (int i=0; i<numPixel; i++)
+				//if (I_edge[i]!=0) cout << I_edge[i] << " " ;
 
+		//cout<< endl;
+
+		//readPPM(I_edge_uchar, "testedge.ppm");
+		//for (int i=0; i<numPixel; i++)
+				//if (I_edge_uchar[i]!=0) cout << (float)I_edge_uchar[i] << " " ;
+
+		//cout<< endl;
+		//imageUchar2Float( I_edge_uchar, I_edge_mat, n );
+
+		//for (int i=0; i<numPixel; i++)
+				//if (I_edge_mat[i]!=0) cout << I_edge_mat[i] << " " ;
 		
+		//cout<< endl;
     //Canny(I_gray_cv,I_edge_cv,0.5,0.8);
 		//imwrite("edge_cv.pgm",I_edge_cv);
 

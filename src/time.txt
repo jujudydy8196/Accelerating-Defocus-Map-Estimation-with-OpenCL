@@ -1,2 +1,7 @@
 defocus Estimation time: 0.711244
 cl_propagate time: 21.2157
+defocus Estimation time: 0.708979
+defocus Estimation time: 0.755297
+defocus Estimation time: 0.714321
+defocus Estimation time: 0.70734
+defocus Estimation time: 0.710103
