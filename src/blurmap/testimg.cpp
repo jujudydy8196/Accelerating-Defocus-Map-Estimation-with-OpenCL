@@ -43,16 +43,16 @@ int main(int argc, char** argv ) {
 	cout<<r_arr[0]<<" "<<r_arr[1]<<" "<<r_arr[2]<<" "<<r_arr[3]<<endl;
 	//construct group map
 	size_t* grp_table = new size_t[256];
-	for(int i = 0; i < 60; ++i) {
+	for(int i = 0; i < 145; ++i) {
 		grp_table[i] = 0;
 	}
-	for(int i = 60; i < 120; ++i) {
+	for(int i = 145; i < 170; ++i) {
 		grp_table[i] = 1;
 	}
-	for(int i = 120; i < 180; ++i) {
+	for(int i = 170; i < 200; ++i) {
 		grp_table[i] = 2;
 	}
-	for(int i = 180; i <= 255; ++i) {
+	for(int i = 200; i <= 255; ++i) {
 		grp_table[i] = 3;
 	}
 
