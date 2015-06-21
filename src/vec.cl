@@ -229,4 +229,6 @@ __kernel void vecTest(
     for( int i = 0 ; i < 10; ++i ){
         vecAdd( result, v1, v2, size );
     }
-}
+} 
+
+                                                                                                                                                                                        

@@ -1,2 +1,13 @@
-cl_propagate time: 82.815
-cl_propagate time: 83.6172
+defocus Estimation time: 0.711244
+cl_propagate time: 21.2157
+defocus Estimation time: 0.708979
+defocus Estimation time: 0.755297
+defocus Estimation time: 0.714321
+defocus Estimation time: 0.70734
+defocus Estimation time: 0.710103
+canny detection time: 0.053435
+defocus Estimation time: 0.708848
+defocus Estimation time: 0.713802
+cl_propagate time: 4.15604
+defocus Estimation time: 0.713829
+cl_propagate time: 4.14433
