@@ -299,7 +299,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     double elseTime = 0;
     float a1 = 0, a2 = 0;
     int winNum = (2*radius+1)*(2*radius+1);
-    startT();
+    // startT();
     for( size_t i = 0; i < 1000; ++i ){
         // cout << i << "\n";
         // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
@@ -316,9 +316,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         // elseTime += double( clock() - lmStart );
 
         lmStart = clock();
-        startT(1);
-        startT(3);
-        startT(7);
+        // startT(1);
+        // startT(3);
+        // startT(7);
         // LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
         //       boxfilter
@@ -333,7 +333,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         // startT(2);
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
         // endT(2);
-        endT(7);
+        // endT(7);
 
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
@@ -357,7 +357,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
         // endT(2);
 
-        startT(7);
+        // startT(7);
         kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
@@ -381,9 +381,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         // startT(2);
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
         // endT(2);
-        endT(7);
-        endT(3);
-        startT(4);
+        // endT(7);
+        // endT(3);
+        // startT(4);
         kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterComputeAB");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanR.get(), sizeof(cl_mem) ) );
@@ -403,7 +403,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
         // endT(2);
 
-        startT(7);
+        // startT(7);
         kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
@@ -434,9 +434,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
         // endT(2);
         
-        endT(7);
-        endT(4);
-        startT(5);
+        // endT(7);
+        // endT(4);
+        // startT(5);
 
         kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterRunResult");
         arg_and_sizes.resize(0);
@@ -452,8 +452,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         // startT(2);
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
         // endT(2);
-        endT(5);
-        startT(6);
+        // endT(5);
+        // startT(6);
         a1 = lambda * radius * radius;
         a2 = -a1;
         kernel = device_manager->GetKernel("vec.cl", "vecScalarAdd");
@@ -470,8 +470,8 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         // endT(2);
 
         //lmCount += double( clock() - lmStart );
-        endT(6);
-        endT(1);
+        // endT(6);
+        // endT(1);
         lmStart = clock();
         // getAp( Ap.getPtr(), Hp, Lp, size);           // Ap = Hp + Lp
         kernel = device_manager->GetKernel("vec.cl", "vecAdd");
@@ -631,7 +631,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
 
         //printClMemory( 1, *d_rsold.get() );
     }
-    endT();
+    // endT();
     cout << "total\n";
     printT();
     cout << "lm\n";
