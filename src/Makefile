@@ -1,5 +1,5 @@
 CXX=g++
-EXES=sparse propagate defocus_map test_vec cl_test
+EXES=sparse propagate defocus_map test_vec cl_test dof
 
 CFLAGS=-Wall -c -O2 -std=c++11 
 LFLAGS=-lOpenCL -lglog -lgflags
@@ -22,6 +22,8 @@ test_vec: guidedfilter.o test_vec.o
 cl_test: cl_test.o cl_helper.o propagatecl.o propagate.o
 	$(CXX) $^ $(LFLAGS) -o $@
 
+dof: testimg.o fileIO.o 
+	$(CXX) $^ $(LFLAGS) -o $@
 
 %.o: %.cpp %.h
 	$(CXX) $(CFLAGS) $< -o $@
@@ -41,6 +43,8 @@ test_vec.o: test_vec.cpp vec.h
 cl_test.o: cl_test.cpp
 	$(CXX) $(CFLAGS) $< -o $@
 
+testimg.o: testimg.cpp fileIO.h
+	$(CXX) $(CFLAGS) $< -o $@
 
 clean:
 	-rm *.o $(EXES)
