@@ -112,6 +112,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
     // test new box
+    /*
     auto d_ones = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_box_tmp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_box_buffer = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
@@ -166,6 +167,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     endT(1);
     cout << "old ";
     printT(1);
+    */
 
     kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
     arg_and_sizes.resize(0);
