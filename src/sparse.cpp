@@ -55,12 +55,19 @@ int main(int argc, char** argv) {
 		//Mat I_cv = imread(argv[1]);
 		//Mat I_gray_cv,I_edge_cv;
 		//cvtColor(I_cv,I_gray_cv,CV_BGR2GRAY);
-		start = clock();
-		canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
-		stop = clock();
+		//
+
+		//start = clock();
+		//canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
+		//stop = clock();
 		
-		cout << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
-		timelog << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
+		//cout << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
+		//timelog << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
+
+		readPPM(I_edge_uchar, "testedge.ppm");
+		imageUchar2Float( I_edge_uchar, I_edge, n );
+
+		
     //Canny(I_gray_cv,I_edge_cv,0.5,0.8);
 		//imwrite("edge_cv.pgm",I_edge_cv);
 
