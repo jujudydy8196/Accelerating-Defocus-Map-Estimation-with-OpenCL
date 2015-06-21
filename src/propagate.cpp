@@ -4,10 +4,10 @@ void propagate( const float* image, const float* estimatedBlur, const size_t w, 
 {
     size_t size = w * h;
 
-    for(size_t i = 0; i < size; ++i){
-        if( estimatedBlur[i] < 0 || estimatedBlur[i] > 1 ) cout << estimatedBlur[i] << ' ';
-    }
-    cout << endl;
+    //for(size_t i = 0; i < size; ++i){
+        //if( estimatedBlur[i] < 0 || estimatedBlur[i] > 1 ) cout << estimatedBlur[i] << ' ';
+    //}
+    //cout << endl;
 
     Vec<float> estimate( size );//, x( size );
     Vec<float> H( size );
@@ -71,7 +71,7 @@ void conjgrad(const Vec<float>& H, float* Hp, const LaplaMat* LM, float* Lp, con
 
     for( size_t i = 0; i < 1000; ++i ){
         // Ap = A * p
-        cout << i << ' ' << rsold << endl;
+        //cout << i << ' ' << rsold << endl;
         HFilter( Hp, p.getPtr(), H, size);
         // lambda_LFilter( L, image, p.getPtr(), h, w, lambda, radius );
         LM->run(Lp, p.getPtr(), lambda);
