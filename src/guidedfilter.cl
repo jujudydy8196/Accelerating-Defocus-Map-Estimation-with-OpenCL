@@ -1,3 +1,29 @@
+__kernel void boxfilter2(
+    __global float *result,
+    __global const float *image,
+    const int width,
+    const int height,
+    const int r,
+    const int winNum
+)
+{
+    size_t gx = get_global_id(0);
+    size_t gy = get_global_id(1);
+    float sum = 0;
+    size_t count = 0;
+
+    if( gx >= width-r || gx < r || gy >= height || gy < r ) return;
+
+    int yend = gy+r;
+    for( int y = gy-r; y <= yend; ++y ){
+        int xend = gx+r;
+        for( int x = gx-r; x <= xend; ++x ){
+            sum += image[y*width+x];
+        }
+    }
+    result[gy*width+gx] = sum / winNum;
+}
+
 __kernel void boxfilter(
     __global float *result,
     __global const float *image,
@@ -24,6 +50,77 @@ __kernel void boxfilter(
         }
     }
     result[gy*width+gx] = sum / count;
+}
+
+__kernel void boxfilterCumulateY(
+    __global float *result,
+    __global const float *image,
+    __global float *cumulate, // buffer
+    const int width,
+    const int height,
+    const int size,
+    const int r
+)
+{
+    size_t id = get_global_id(0);
+
+    if( id < width ){
+        int sum = image[id];
+        cumulate[id] = sum;
+
+        for( int index = width + id; index < size; index += width ){
+            sum += image[index];
+            cumulate[index] = sum;
+        }
+
+        int delta = r*width;
+        int index = id;
+        for( int y = 0; y <= r; index += width, ++y ){
+            result[index] = cumulate[index+delta];
+        }
+        for( int y = r + 1; y < height - r; index += width, ++y ){
+            result[index] = cumulate[index+delta] - cumulate[index-delta-width];
+        }
+        float tmp = cumulate[(height-1)*width+id];
+        for( int y = height - r; y < height; index += width, ++y ){
+            result[index] = tmp - cumulate[index-delta-width];
+        }
+    }
+}
+
+__kernel void boxfilterCumulateX(
+    __global float *result,
+    __global const float *image,
+    __global float *cumulate, // buffer
+    const int width,
+    const int height,
+    const int size,
+    const int r
+)
+{
+    size_t id = get_global_id(0);
+
+    if( id < height ){
+        int beginX = id * width;
+        int sum = image[beginX];
+        cumulate[beginX] = sum;
+
+        for( int index = beginX; index < beginX+width; ++index ){
+            sum += image[index];
+            cumulate[index] = sum;
+        }
+
+        for( int x = beginX; x <= beginX + r; ++x ){
+            result[x] = cumulate[x+r];
+        }
+        for( int x = beginX+r+1; x < beginX + width - r; ++x ){
+            result[x] = cumulate[x+r] - cumulate[x-r-1];
+        }
+        float tmp = cumulate[beginX+width-1];
+        for( int x = beginX + width - r; x < beginX + width; ++x ){
+            result[x] = tmp - cumulate[x-r-1];
+        }
+    }
 }
 
 __kernel void guidedFilterRGB(
@@ -142,7 +239,11 @@ __kernel void guidedFilterRunResult(
     if( id < size ){
         q[id] = Ir[id]*meanA1[id] + Ig[id]*meanA2[id] + Ib[id]*meanA3[id] + meanB[id];
     }
-}
+}  
 
 
 
+
+
+
+            

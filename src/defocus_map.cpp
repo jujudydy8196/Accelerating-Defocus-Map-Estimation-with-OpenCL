@@ -26,8 +26,8 @@ DeviceManager *device_manager;
 int main(int argc, char** argv) {
     clock_t start, stop;
     
-    if(argc !=5) {
-        cout << "Usage: defocus_map <original image> <lambda> <radius> <gradient_descent[1] / filtering[2] / opencl[3]>" << endl;
+    if(argc !=6) {
+        cout << "Usage: defocus_map <original image> <sparse image> <lambda> <radius> <gradient_descent[1] / filtering[2] / opencl[3]>" << endl;
         return -1;
     }
 
@@ -48,9 +48,9 @@ int main(int argc, char** argv) {
     float lambda;
 
     sizePGM(width, height, argv[1]);
-    lambda = atof(argv[2]);
-    r = atof(argv[3]);
-    mode = atoi(argv[4]);
+    lambda = atof(argv[3]);
+    r = atof(argv[4]);
+    mode = atoi(argv[5]);
     numPixel = width*height;
     int n = numPixel * 3;
     I_sparse = new float[numPixel];
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     readPPM(I_ori_uchar, argv[1]);
     imageUchar2Float( I_ori_uchar, I_ori, n );
 
-    readPGM(I_sparse_uchar, "./sparse_boy.pgm"); 
+    readPGM(I_sparse_uchar, argv[2]); 
     imageUchar2Float( I_sparse_uchar, I_sparse2, numPixel );
     // imageFloat2Uchar( I_sparse, I_out, numPixel );
 

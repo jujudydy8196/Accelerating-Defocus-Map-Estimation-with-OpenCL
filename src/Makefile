@@ -19,7 +19,7 @@ defocus_map: fileIO.o guidedfilter.o edge.o defocus.o defocus_map.o propagatecl.
 test_vec: guidedfilter.o test_vec.o
 	$(CXX) $^ $(LFLAGS) -o $@
 
-cl_test: cl_test.o cl_helper.o propagatecl.o propagate.o
+cl_test: cl_test.o cl_helper.o propagatecl.o propagate.o vec.o guidedfilter.o
 	$(CXX) $^ $(LFLAGS) -o $@
 
 dof: testimg.o fileIO.o 

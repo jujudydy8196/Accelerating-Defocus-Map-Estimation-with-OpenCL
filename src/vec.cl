@@ -217,4 +217,18 @@ __kernel void computeP(
 
 }
 
+__kernel void vecTest(
+    __global float *result,
+    __global const float *v1,
+    __global const float *v2,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
 
+    for( int i = 0 ; i < 10; ++i ){
+        vecAdd( result, v1, v2, size );
+    }
+} 
+
+                                                                                                                                                                                        

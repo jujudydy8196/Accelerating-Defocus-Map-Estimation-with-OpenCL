@@ -5,8 +5,7 @@
 void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float std, float lamda, float maxBlur, int width, int height, int blur) {
 	// std :the standard devitation reblur gaussian1, typically std=[0.8:1]
 
-	write( edge, width, height, "1edge.pgm" );
-
+	//write( edge, width, height, "1edge.pgm" );
 	float std1= std;
 	float std2= std1 * 1.5;
 	int w=  (2*ceil(2* std1))+1;
@@ -28,11 +27,11 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 	g1y(gy1,x1,y1,std1,w);
 	float* gimx = new float[width*height];
 	filter(gimx,gx1,I,width,height,w);
-	imageInfo( gimx, width*height );
+	//imageInfo( gimx, width*height );
 	// writeDiff( gimx, width, height, "gimx.pgm" );	
     float* gimy = new float[width*height];
 	filter(gimy,gy1,I,width,height,w);
-	imageInfo( gimy, width*height );
+	//imageInfo( gimy, width*height );
 	// writeDiff( gimy, width, height, "gimy.pgm" );	
 	float* mg1 = new float[width*height];
 	for (int i=0; i<height; i++) {
@@ -40,7 +39,7 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 			mg1[i*width+j] = sqrt(pow(gimx[i*width+j],2)+pow(gimy[i*width+j],2));
 		}
 	}
-	imageInfo( mg1, width*height );
+	//imageInfo( mg1, width*height );
 	// write( mg1, width, height, "mg1.pgm" );	
 	delete []x1;
 	delete []y1;
@@ -69,11 +68,11 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 	g1y(gy2,x2,y2,std2,w2);
 	float* gimx2 = new float[width*height];
 	filter(gimx2,gx2,I,width,height,w2);
-	imageInfo( gimx2, width*height );
+	//imageInfo( gimx2, width*height );
 	// writeDiff( gimx2, width, height, "gimx2.pgm" );		
 	float* gimy2 = new float[width*height];
 	filter(gimy2,gy2,I,width,height,w2);
-	imageInfo( gimy2, width*height );
+	//imageInfo( gimy2, width*height );
 	// writeDiff( gimy2, width, height, "gimy2.pgm" );		
 	float* mg2 = new float[width*height];
 	for (int i=0; i<height; i++) {
@@ -81,7 +80,7 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 			mg2[i*width+j] = sqrt(pow(gimx2[i*width+j],2)+pow(gimy2[i*width+j],2));
 		}
 	}		
-	imageInfo( mg2, width*height );
+	//imageInfo( mg2, width*height );
 	// write( mg2, width, height, "mg2.pgm" );	
 
 	delete []x2;
@@ -102,7 +101,7 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 			}
 		}
 	}
-	imageInfo( gRatio, width*height );
+	//imageInfo( gRatio, width*height );
 	// write( gRatio, width, height, "gRatio.pgm" );	
 
 	delete []mg1;
@@ -124,7 +123,7 @@ void defocusEstimation(float* I_rgb, float* I, float* edge, float* out, float st
 		}
 	}	
 	sparseScale(out,maxBlur,height*width);
-	imageInfo( out, width*height );
+	//imageInfo( out, width*height );
 
   if (blur == 2)
 		write( out, width, height, "sparse.pgm" );

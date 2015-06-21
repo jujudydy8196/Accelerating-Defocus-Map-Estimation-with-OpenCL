@@ -158,12 +158,14 @@ unique_ptr<char[]> LoadFile(const char *file_name)
 	// Get size
 	fseek(fp, 0, SEEK_END);
 	const long file_size = ftell(fp);
+    DLOG(INFO) << file_name << " size: " << file_size << endl;
 
 	// Now allocate and read
 	unique_ptr<char[]> file_data(new char[file_size]);
 	rewind(fp);
 	fread(file_data.get(), 1, file_size, fp);
 	fclose(fp);
+    file_data[file_size-1] = '\0';
 
 	return move(file_data);
 }
@@ -285,5 +287,12 @@ void DeviceManager::Call(
 	// CHECK_EQ(result, CL_SUCCESS) << clewErrorString(result);
     // LOG(INFO) << size;
 	result = clEnqueueNDRangeKernel( command_queue_, kernel, dim, nullptr, global_dim, local_dim, 0, nullptr, nullptr );
+	CHECK_EQ(result, CL_SUCCESS) << clewErrorString(result);
+}
+
+void DeviceManager::Finish()
+{
+	cl_int result;
+	result = clFinish( command_queue_ );
 	CHECK_EQ(result, CL_SUCCESS) << clewErrorString(result);
 }
