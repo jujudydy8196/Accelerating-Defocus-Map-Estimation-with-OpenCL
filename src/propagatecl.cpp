@@ -152,7 +152,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     cout << "new ";
     printT();
     resetT();
-    startT();
+    startT(1);
     for( int i = 0; i < 100; ++i){
     kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
     arg_and_sizes.resize(0);
@@ -163,6 +163,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
     }
+    endT(1);
+    cout << "old ";
+    printT(1);
 
     kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
     arg_and_sizes.resize(0);
