@@ -7,3 +7,4 @@ defocus Estimation time: 0.70734
 defocus Estimation time: 0.710103
 canny detection time: 0.053435
 defocus Estimation time: 0.708848
+defocus Estimation time: 0.713802
