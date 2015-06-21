@@ -1,3 +1,29 @@
+__kernel void boxfilter2(
+    __global float *result,
+    __global const float *image,
+    const int width,
+    const int height,
+    const int r,
+    const int winNum
+)
+{
+    size_t gx = get_global_id(0);
+    size_t gy = get_global_id(1);
+    float sum = 0;
+    size_t count = 0;
+
+    if( gx >= width-r || gx < r || gy >= height || gy < r ) return;
+
+    int yend = gy+r;
+    for( int y = gy-r; y <= yend; ++y ){
+        int xend = gx+r;
+        for( int x = gx-r; x <= xend; ++x ){
+            sum += image[y*width+x];
+        }
+    }
+    result[gy*width+gx] = sum / winNum;
+}
+
 __kernel void boxfilter(
     __global float *result,
     __global const float *image,
@@ -142,5 +168,11 @@ __kernel void guidedFilterRunResult(
     if( id < size ){
         q[id] = Ir[id]*meanA1[id] + Ig[id]*meanA2[id] + Ib[id]*meanA3[id] + meanB[id];
     }
-}
+}  
 
+
+
+
+
+
+            
