@@ -37,7 +37,7 @@ int main(int argc, char** argv ) {
 	ftdIm = new uchar[3*numPixel];
 	readPPM(Im, argv[1]);
 	readPGM(blurmap, argv[2]);
-	int r_arr[4] = {0, width/160, width/80, width/60};
+	int r_arr[4] = {0, width/120, width/40, width/30};
 	int sigma_arr[4] = {0, max(1, r_arr[1]/3), max(1, r_arr[2]/3), max(1, r_arr[3]/3) };
 
 	cout<<r_arr[0]<<" "<<r_arr[1]<<" "<<r_arr[2]<<" "<<r_arr[3]<<endl;

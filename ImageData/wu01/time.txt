@@ -1,4 +1,2 @@
-canny detection time: 0.065057
-defocus Estimation time: 1.02789
-propagate time: 132.079
-cl_propagate time: 13.309
+defocus Estimation time: 0.634757
+cl_propagate time: 4.95127
