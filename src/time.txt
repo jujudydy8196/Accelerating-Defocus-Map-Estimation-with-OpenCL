@@ -6,3 +6,8 @@ cl_propagate time: 11.05
 cl_propagate time: 11.0505
 cl_propagate time: 10.5902
 cl_propagate time: 8.59469
+cl_propagate time: 10.7526
+cl_propagate time: 7.33438
+propagate time: 60.5547
+cl_propagate time: 10.5721
+cl_propagate time: 7.34106
