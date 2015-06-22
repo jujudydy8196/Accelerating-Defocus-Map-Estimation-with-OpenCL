@@ -318,7 +318,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     int winNum = (2*radius+1)*(2*radius+1);
     // startT();
     for( size_t i = 0; i < 1000; ++i ){
-        // cout << i << "\n";
+        cout << i << "\n";
         // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
@@ -692,6 +692,8 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
     device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
 
+    // compareMemory( size,  )
+
     // guidedFilterRGB
     kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterRGB");
     arg_and_sizes.resize(0);
@@ -853,7 +855,7 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     int winNum = (2*radius+1)*(2*radius+1);
     // startT();
     for( size_t i = 0; i < 1000; ++i ){
-        // cout << i << "\n";
+        cout << i << "\n";
         // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);

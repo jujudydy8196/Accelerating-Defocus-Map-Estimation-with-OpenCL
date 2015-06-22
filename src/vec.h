@@ -152,7 +152,7 @@ public:
     LaplaMat(const float* I_ori, const size_t width, const size_t height, const size_t r);
     void run(float* Lp, const float* p, const float lambda) const;
     ~LaplaMat();
-private:
+// private:
     guided_filter* _gf;
     float* _I_ori;
     size_t _r;
