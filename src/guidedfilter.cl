@@ -78,7 +78,7 @@ __kernel void boxfilterCumulateY(
     size_t id = get_global_id(0); // x
 
     if( id < width ){
-        int sum = image[id];
+        float sum = image[id];
         cumulate[id] = sum;
 
         for( int index = width + id; index < size; index += width ){
@@ -115,7 +115,7 @@ __kernel void boxfilterCumulateX(
 
     if( id < height ){
         int beginX = id * width;
-        int sum = image[beginX];
+        float sum = image[beginX];
         cumulate[beginX] = sum;
 
         for( int index = beginX+1; index < beginX+width; ++index ){

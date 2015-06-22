@@ -27,12 +27,12 @@ inline void resetT( size_t id = 0 )
     totalTime[id] = 0;
 }
 
-void propagatecl( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t r, Vec<float>& result )
+void propagatecl( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t ra, Vec<float>& result )
 {
     loadKernels();
 
     int size = w * h;
-    int width = w, height = h, radius = r;
+    int width = w, height = h, radius = ra;
 
     // allocate gpu memory
     // buffer
@@ -565,12 +565,12 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     device_manager->ReadMemory(result.getPtr(), *d_x.get(), size*sizeof(float));
 }
 
-void propagatecl2( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t r, Vec<float>& result )
+void propagatecl2( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t ra, Vec<float>& result )
 {
     loadKernels();
 
     int size = w * h;
-    int width = w, height = h, radius = r;
+    int width = w, height = h, radius = ra;
 
     // allocate gpu memory
     // buffer
@@ -642,7 +642,6 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     auto &d_tmp = d_buffer2;
     auto &d_ApP = d_Hp;    
     
-
     // write to gpu memory
     device_manager->WriteMemory( image, *d_image.get(), 3*size*sizeof(float));
     device_manager->WriteMemory( estimatedBlur, *d_r.get(), size*sizeof(float));
@@ -692,7 +691,21 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
     device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
 
-    // compareMemory( size,  )
+    kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
+    arg_and_sizes.resize(0);
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_ones.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_box_buffer.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
+    device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
+
+    kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_N.get(), sizeof(cl_mem) );
+    arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+    device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
 
     // guidedFilterRGB
     kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterRGB");
@@ -851,12 +864,23 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
+    // debug!!!
+    Vec<float> estimate( size );//, x( size );
+    Vec<float> H( size );
+    float* Hp = new float[size];
+    float* Lp = new float[size];
+    LaplaMat* LM = new LaplaMat(image, w, h, radius);
+    constructEstimate( estimatedBlur, estimate );
+    constructH( estimatedBlur, H, size);
+    Vec<float> r( estimate ), p( estimate ), Ap( size );
+    float rsold = Vec<float>::dot( r, r ), alpha = 0.0, rsnew = 0.0;
+
     float a1 = 0, a2 = 0;
     int winNum = (2*radius+1)*(2*radius+1);
     // startT();
     for( size_t i = 0; i < 1000; ++i ){
         cout << i << "\n";
-        // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
+        HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_Hp.get(), sizeof(cl_mem) ) );
@@ -865,9 +889,19 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
-        // LM->run(Lp, p.getPtr(), lambda);
+        LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
         //       boxfilter
+              
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );      
+              
         kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
@@ -891,7 +925,9 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_N.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-        endT();
+
+        // cout << "box\n";
+        // compareMemory( size, *d_tmp.get(), *d_meanP.get() );
 
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
@@ -1043,6 +1079,11 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
+        // cout << "lala\n";
+        // compareMemory( size, Hp, *d_Hp.get() );
+        // compareMemory( size, LM->_gf->N, *d_gf_N.get() );
+        // compareMemory( size, Lp, *d_Lp.get(), 0.01 );
+
         // getAp( Ap.getPtr(), Hp, Lp, size);           // Ap = Hp + Lp
         kernel = device_manager->GetKernel("vec.cl", "vecAdd");
         arg_and_sizes.resize(0);
@@ -1150,9 +1191,9 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
-        float rsold;
-        device_manager->ReadMemory(&rsold, *d_rsold.get(), sizeof(float));
-        if( rsold < 1e-10  ) break;
+        float gpu_rsold;
+        device_manager->ReadMemory(&gpu_rsold, *d_rsold.get(), sizeof(float));
+        if( gpu_rsold < 1e-10  ) break;
 
         // Vec<float>::add( p, r, p, 1, rsnew/rsold );  // add, but rsnew/rsold
         // rsold = rsnew;
@@ -1233,4 +1274,25 @@ void compareMemory( int size, float* cpp, cl_mem d, float threshold )
     cout << errorCount << " / " << warningCount << " / " << size << endl;
 
     delete [] cl;
+}
+
+void compareMemory( int size, cl_mem d1, cl_mem d2, float threshold )
+{
+    float *cl1 = new float[size];
+    float *cl2 = new float[size];
+    int errorCount = 0, warningCount = 0;
+    device_manager->ReadMemory(cl1, d1, size*sizeof(float));
+    device_manager->ReadMemory(cl2, d2, size*sizeof(float));
+    for(size_t i = 0; i < size; ++i){
+        if( cl1[i] == cl2[i] ) continue;
+        else if( fabs(cl1[i] - cl2[i]) <= threshold ) ++warningCount;
+        else{
+            cout << i << " : " << cl1[i] << ' ' << cl2[i] << endl;
+            ++errorCount;
+        }
+    }
+    cout << errorCount << " / " << warningCount << " / " << size << endl;
+
+    delete [] cl1;
+    delete [] cl2;
 }
