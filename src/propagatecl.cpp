@@ -864,23 +864,12 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
-    // debug!!!
-    Vec<float> estimate( size );//, x( size );
-    Vec<float> H( size );
-    float* Hp = new float[size];
-    float* Lp = new float[size];
-    LaplaMat* LM = new LaplaMat(image, w, h, radius);
-    constructEstimate( estimatedBlur, estimate );
-    constructH( estimatedBlur, H, size);
-    Vec<float> r( estimate ), p( estimate ), Ap( size );
-    float rsold = Vec<float>::dot( r, r ), alpha = 0.0, rsnew = 0.0;
-
     float a1 = 0, a2 = 0;
     int winNum = (2*radius+1)*(2*radius+1);
     // startT();
     for( size_t i = 0; i < 1000; ++i ){
         cout << i << "\n";
-        HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
+        // HFilter( Hp, p.getPtr(), H, size);           // Hp = H .* p
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_Hp.get(), sizeof(cl_mem) ) );
@@ -889,19 +878,9 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
-        LM->run(Lp, p.getPtr(), lambda);
+        // LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
         //       boxfilter
-              
-        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
-        arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
-        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );      
-              
         kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
@@ -925,9 +904,6 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_N.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-
-        // cout << "box\n";
-        // compareMemory( size, *d_tmp.get(), *d_meanP.get() );
 
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
@@ -1078,11 +1054,6 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( &a2, sizeof(float) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-
-        // cout << "lala\n";
-        // compareMemory( size, Hp, *d_Hp.get() );
-        // compareMemory( size, LM->_gf->N, *d_gf_N.get() );
-        // compareMemory( size, Lp, *d_Lp.get(), 0.01 );
 
         // getAp( Ap.getPtr(), Hp, Lp, size);           // Ap = Hp + Lp
         kernel = device_manager->GetKernel("vec.cl", "vecAdd");
