@@ -564,7 +564,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     }
     device_manager->ReadMemory(result.getPtr(), *d_x.get(), size*sizeof(float));
 }
-/*
+
 void propagatecl2( const float* image, const float* estimatedBlur, const size_t w, const size_t h, const float lambda, const size_t r, Vec<float>& result )
 {
     loadKernels();
@@ -573,6 +573,20 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     int width = w, height = h, radius = r;
 
     // allocate gpu memory
+    // buffer
+    auto d_buffer0 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer1 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer2 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer3 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer4 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer5 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer6 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer7 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer8 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer9 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer10 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_buffer11 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    // mem
     auto d_image = device_manager->AllocateMemory(CL_MEM_READ_ONLY, 3*size*sizeof(float));
     auto d_H = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_r = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
@@ -584,11 +598,6 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     auto d_alpha = device_manager->AllocateMemory(CL_MEM_READ_WRITE, sizeof(float));
     auto d_rsold = device_manager->AllocateMemory(CL_MEM_READ_WRITE, sizeof(float));
     auto d_rsRatio = device_manager->AllocateMemory(CL_MEM_READ_WRITE, sizeof(float));
-    // buffer
-    MemoryObject d_buffer[12] = {};
-    for( size_t i = 0; i < 12; ++i ){
-        d_buffer[i] = device_manager->AllocateMemory(CL_MEM_READ_WRITE, sizeof(float));
-    }
     // guided filter
     auto d_gf_R = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_gf_G = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
@@ -596,36 +605,43 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     auto d_gf_meanR = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_gf_meanG = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_gf_meanB = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto &d_gf_Irr = d_buffer[0];
-    auto &d_gf_Irg = d_buffer[1];
-    auto &d_gf_Irb = d_buffer[2];
-    auto &d_gf_Igg = d_buffer[3];
-    auto &d_gf_Igb = d_buffer[4];
-    auto &d_gf_Ibb = d_buffer[5];
-    auto &d_gf_varIrr = d_buffer[6];
-    auto &d_gf_varIrg = d_buffer[7];
-    auto &d_gf_varIrb = d_buffer[8];
-    auto &d_gf_varIgg = d_buffer[9];
-    auto &d_gf_varIgb = d_buffer[10];
-    auto &d_gf_varIbb = d_buffer[11];
+    auto &d_gf_Irr = d_buffer0;
+    auto &d_gf_Irg = d_buffer1;
+    auto &d_gf_Irb = d_buffer2;
+    auto &d_gf_Igg = d_buffer3;
+    auto &d_gf_Igb = d_buffer4;
+    auto &d_gf_Ibb = d_buffer5;
+    auto &d_gf_varIrr = d_buffer6;
+    auto &d_gf_varIrg = d_buffer7;
+    auto &d_gf_varIrb = d_buffer8;
+    auto &d_gf_varIgg = d_buffer9;
+    auto &d_gf_varIgb = d_buffer10;
+    auto &d_gf_varIbb = d_buffer11;
     auto d_gf_N = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_gf_invSigma = device_manager->AllocateMemory(CL_MEM_READ_WRITE, 9*size*sizeof(float));
-    // buffer
-    auto d_meanP = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_tmp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_varRP = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_varGP = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_varBP = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_a1 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_a2 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_a3 = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_b = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_dotBuffer = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    // gf run
+    auto &d_meanP = d_buffer0;
+    auto &d_rp = d_buffer1;
+    auto &d_gp = d_buffer2;
+    auto &d_bp = d_buffer3;
+    auto &d_varRP = d_buffer4;
+    auto &d_varGP = d_buffer5;
+    auto &d_varBP = d_buffer6;
+    auto &d_a1 = d_buffer7;
+    auto &d_a2 = d_buffer8;
+    auto &d_a3 = d_buffer9;
+    auto &d_b = d_buffer10;
+    auto &d_meanB = d_buffer11;
+    // boxfilter
+    auto &d_ones = d_buffer0;
+    auto d_box_tmp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
+    auto d_box_buffer = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     // reference
-    auto &d_rr = d_Hp;
-    auto &d_rp = d_gf_Irr;
-    auto &d_gp = d_gf_Irg;
-    auto &d_bp = d_gf_Irb;
+    auto &d_dotBuffer = d_buffer0;
+    auto &d_rr = d_buffer1;
+    auto &d_tmp = d_buffer2;
+    auto &d_ApP = d_Hp;    
+    
 
     // write to gpu memory
     device_manager->WriteMemory( image, *d_image.get(), 3*size*sizeof(float));
@@ -651,13 +667,8 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
     // guided filter initialize
-    auto d_ones = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_box_tmp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    auto d_box_buffer = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
-    float one = 1;
-    size_t lll[1] = {16};
-
     // gf_N
+    float one = 1;
     kernel = device_manager->GetKernel("vec.cl", "vecCopyConstant");
     arg_and_sizes.resize(0);
     arg_and_sizes.push_back( pair<const void*, size_t>( d_ones.get(), sizeof(cl_mem) ) );
@@ -668,7 +679,7 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
     arg_and_sizes.resize(0);
     arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( d_image.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_ones.get(), sizeof(cl_mem) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( d_box_buffer.get(), sizeof(cl_mem) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
@@ -677,9 +688,9 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
 
     kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
-    arg_and_sizes[0] = pair<const void*, size_t>( d_ones.get(), sizeof(cl_mem) );
+    arg_and_sizes[0] = pair<const void*, size_t>( d_gf_N.get(), sizeof(cl_mem) );
     arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
-    device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, lll );
+    device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
 
     // guidedFilterRGB
     kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterRGB");
@@ -855,15 +866,29 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         // LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
         //       boxfilter
-        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
         arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_meanP.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_box_buffer.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
-        // arg_and_sizes.push_back( pair<const void*, size_t>( &winNum, sizeof(int) ) );
-        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_meanP.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
+
+        kernel = device_manager->GetKernel("vec.cl", "vecDivide");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_meanP.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_meanP.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_N.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
@@ -899,7 +924,43 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes[1] = pair<const void*, size_t>( d_bp.get(), sizeof(cl_mem) );
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
 
-        kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterComputeAB");
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_rp.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_box_buffer.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_gp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_bp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_varBP.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterComputeAB2");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanR.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_meanG.get(), sizeof(cl_mem) ) );
@@ -913,30 +974,55 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( d_a3.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_b.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_invSigma.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_N.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
-        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
         arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_a1.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_box_buffer.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
-        // arg_and_sizes.push_back( pair<const void*, size_t>( &winNum, sizeof(int) ) );
-        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
 
-        arg_and_sizes[0] = pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) );
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
         arg_and_sizes[1] = pair<const void*, size_t>( d_a2.get(), sizeof(cl_mem) );
-        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
 
-        arg_and_sizes[0] = pair<const void*, size_t>( d_varBP.get(), sizeof(cl_mem) );
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
         arg_and_sizes[1] = pair<const void*, size_t>( d_a3.get(), sizeof(cl_mem) );
-        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
 
-        arg_and_sizes[0] = pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) );
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_varBP.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
         arg_and_sizes[1] = pair<const void*, size_t>( d_b.get(), sizeof(cl_mem) );
-        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
+
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+        arg_and_sizes[0] = pair<const void*, size_t>( d_meanB.get(), sizeof(cl_mem) );
+        arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+        device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local16 );
 
         kernel = device_manager->GetKernel("guidedfilter.cl", "guidedFilterRunResult");
         arg_and_sizes.resize(0);
@@ -947,7 +1033,15 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varBP.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_tmp.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_meanB.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
+        device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+
+        kernel = device_manager->GetKernel("vec.cl", "vecDivide");
+        arg_and_sizes.resize(0);
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_Lp.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_Lp.get(), sizeof(cl_mem) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_N.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
@@ -972,10 +1066,8 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( d_Lp.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-        // elseTime += double( clock() - lmStart );
 
         // alpha = rsold / Vec<float>::dot( p, Ap );    // dot
-        auto &d_ApP = d_Hp;
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
@@ -983,7 +1075,6 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-
 
         int tmpSize = size;
         size_t tmpGlobalSize[1] = { global_size1[0] };
@@ -1091,7 +1182,7 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
     }
     device_manager->ReadMemory(result.getPtr(), *d_x.get(), size*sizeof(float));
 }
-*/
+
 void loadKernels()
 {
     device_manager->GetKernel("vec.cl", "vecSum");
@@ -1115,6 +1206,7 @@ void loadKernels()
     device_manager->GetKernel("guidedfilter.cl", "guidedFilterRGB");
     device_manager->GetKernel("guidedfilter.cl", "guidedFilterInvMat");
     device_manager->GetKernel("guidedfilter.cl", "guidedFilterComputeAB");
+    device_manager->GetKernel("guidedfilter.cl", "guidedFilterComputeAB2");
     device_manager->GetKernel("guidedfilter.cl", "guidedFilterRunResult");
 }
 

@@ -126,6 +126,11 @@ vector<cl_uint> GetComputeUnits(const cl_device_id did)
 	return OpenclAllocateRoutine<cl_uint, size_t>(bind(clGetDeviceInfo, _4, (cl_device_info)CL_DEVICE_MAX_COMPUTE_UNITS, _1, _2, _3), did);
 }
 
+vector<char> GetKernelName(const cl_kernel kernel)
+{
+	return OpenclAllocateRoutine<char, size_t>(bind(clGetKernelInfo, _4, (cl_kernel_info)CL_KERNEL_FUNCTION_NAME, _1, _2, _3), kernel);
+}
+
 DeviceManager::DeviceManager(const cl_device_id device): device_(device)
 {
 	cl_int result;
@@ -275,11 +280,13 @@ void DeviceManager::Call(
 ) {
 	cl_int result;
 
+	auto name = GetKernelName(kernel);
+
 	for (size_t i = 0; i < arg_and_sizes.size(); ++i) {
 		auto &arg_and_size = arg_and_sizes[i];
         // LOG(INFO) << i << "\n";
 		result = clSetKernelArg(kernel, i, arg_and_size.second, arg_and_size.first);
-		CHECK_EQ(result, CL_SUCCESS) << clewErrorString(result);
+		CHECK_EQ(result, CL_SUCCESS) << name.data() << ' ' << clewErrorString(result);
 	}
 	// TODO: a OpenCL call is required here
     // cl_ulong size;
