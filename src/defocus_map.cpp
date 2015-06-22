@@ -94,6 +94,7 @@ int main(int argc, char** argv) {
     if(mode==1) propagate( I_ori, I_sparse2, width, height, lambda, r, result );
     else if(mode==2) propagate2( I_ori, I_sparse, width, height, lambda, r, result );
     else if(mode==3) propagatecl( I_ori, I_sparse2, width, height, lambda, r, result );
+    else if(mode==4) propagatecl2( I_ori, I_sparse2, width, height, lambda, r, result );
     
     stop = clock();
 
@@ -104,7 +105,7 @@ int main(int argc, char** argv) {
     timelog.open("time.txt", ios::app);
     if (mode==1) 
         timelog << "propagate time: " ;
-    else if (mode==3)
+    else if (mode==3||mode==4)
         timelog << "cl_propagate time: " ;
     timelog << double(stop - start) / CLOCKS_PER_SEC <<endl;
     timelog.close();

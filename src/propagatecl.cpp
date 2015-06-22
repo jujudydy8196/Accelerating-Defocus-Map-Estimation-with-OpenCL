@@ -889,6 +889,7 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes.push_back( pair<const void*, size_t>( d_gf_N.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
+        endT();
 
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
         arg_and_sizes.resize(0);
@@ -905,24 +906,6 @@ void propagatecl2( const float* image, const float* estimatedBlur, const size_t 
         arg_and_sizes[0] = pair<const void*, size_t>( d_bp.get(), sizeof(cl_mem) );
         arg_and_sizes[1] = pair<const void*, size_t>( d_gf_B.get(), sizeof(cl_mem) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
-
-        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
-        arg_and_sizes.resize(0);
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( d_rp.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
-        // arg_and_sizes.push_back( pair<const void*, size_t>( &winNum, sizeof(int) ) );
-        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
-
-        arg_and_sizes[0] = pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) );
-        arg_and_sizes[1] = pair<const void*, size_t>( d_gp.get(), sizeof(cl_mem) );
-        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
-
-        arg_and_sizes[0] = pair<const void*, size_t>( d_varBP.get(), sizeof(cl_mem) );
-        arg_and_sizes[1] = pair<const void*, size_t>( d_bp.get(), sizeof(cl_mem) );
-        device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
 
         kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
         arg_and_sizes.resize(0);
