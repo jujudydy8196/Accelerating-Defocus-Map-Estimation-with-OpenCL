@@ -114,9 +114,9 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     size_t global_size2[2] = {};
     size_t local16[] = {16};
     vector<pair<const void*, size_t>> arg_and_sizes;
-    global_size1[0] = getGlobalSize( size, local_size1[0] );
-    global_size2[0] = getGlobalSize( w, local_size2[0] );
-    global_size2[1] = getGlobalSize( h, local_size2[1] );
+    global_size1[0] = getGlobalSize( size, 1024 );
+    global_size2[0] = getGlobalSize( w, 32 );
+    global_size2[1] = getGlobalSize( h, 32 );
     
     // constructH
     arg_and_sizes.push_back( pair<const void*, size_t>( d_H.get(), sizeof(cl_mem) ) );
@@ -285,18 +285,18 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     int tmpSize = size;
     size_t tmpGlobalSize[1] = { global_size1[0] };
     // recursive sum
-    while( tmpSize > local_size1[0] ){
+    while( tmpSize > /*local_size1[0]*/ 1024 ){
         kernel = device_manager->GetKernel("vec.cl", "vecSum");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( NULL,/* local_size1[0]*/1024*sizeof(float) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
-        if( tmpSize % local_size1[0] ) tmpSize = tmpSize / local_size1[0] + 1;
-        else tmpSize = tmpSize / local_size1[0];
-        tmpGlobalSize[0] = getGlobalSize( tmpSize, local_size1[0] );
+        if( tmpSize % 1024 /*local_size1[0]*/ ) tmpSize = tmpSize / 1024/*local_size1[0]*/ + 1;
+        else tmpSize = tmpSize / 1024/*local_size1[0]*/;
+        tmpGlobalSize[0] = getGlobalSize( tmpSize, 1024/*local_size1[0]*/ );
 
         kernel = device_manager->GetKernel("vec.cl", "vecCopy");
         arg_and_sizes.resize(0);
@@ -310,7 +310,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.resize(0);
     arg_and_sizes.push_back( pair<const void*, size_t>( d_rsold.get(), sizeof(cl_mem) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( NULL, 1024/*local_size1[0]*/*sizeof(float) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
@@ -461,18 +461,18 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         int tmpSize = size;
         size_t tmpGlobalSize[1] = { global_size1[0] };
         // recursive sum
-        while( tmpSize > local_size1[0] ){
+        while( tmpSize > 1024/*local_size1[0]*/ ){
             kernel = device_manager->GetKernel("vec.cl", "vecSum");
             arg_and_sizes.resize(0);
             arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
-            arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( NULL, 1024/*local_size1[0]*/*sizeof(float) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
             device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
-            if( tmpSize % local_size1[0] ) tmpSize = tmpSize / local_size1[0] + 1;
-            else tmpSize = tmpSize / local_size1[0];
-            tmpGlobalSize[0] = getGlobalSize( tmpSize, local_size1[0] );
+            if( tmpSize % 1024/*local_size1[0]*/ ) tmpSize = tmpSize / 1024/*local_size1[0]*/ + 1;
+            else tmpSize = tmpSize / 1024/*local_size1[0]*/;
+            tmpGlobalSize[0] = getGlobalSize( tmpSize, 1024/*local_size1[0]*/ );
 
             kernel = device_manager->GetKernel("vec.cl", "vecCopy");
             arg_and_sizes.resize(0);
@@ -486,7 +486,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_alpha.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_ApP.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, 1024/*local_size1[0]*/*sizeof(float) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rsold.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
@@ -517,18 +517,18 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         tmpSize = size;
         tmpGlobalSize[0] = global_size1[0];
         // recursive sum
-        while( tmpSize > local_size1[0] ){
+        while( tmpSize > 1024/*local_size1[0]*/ ){
             kernel = device_manager->GetKernel("vec.cl", "vecSum");
             arg_and_sizes.resize(0);
             arg_and_sizes.push_back( pair<const void*, size_t>( d_dotBuffer.get(), sizeof(cl_mem) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
-            arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+            arg_and_sizes.push_back( pair<const void*, size_t>( NULL, 1024/*local_size1[0]*/*sizeof(float) ) );
             arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
             device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
-            if( tmpSize % local_size1[0] ) tmpSize = tmpSize / local_size1[0] + 1;
-            else tmpSize = tmpSize / local_size1[0];
-            tmpGlobalSize[0] = getGlobalSize( tmpSize, local_size1[0] );
+            if( tmpSize % /*local_size1[0]*/1024 ) tmpSize = tmpSize / 1024/*local_size1[0]*/ + 1;
+            else tmpSize = tmpSize / 1024/*local_size1[0]*/;
+            tmpGlobalSize[0] = getGlobalSize( tmpSize, 1024/*local_size1[0]*/ );
 
             kernel = device_manager->GetKernel("vec.cl", "vecCopy");
             arg_and_sizes.resize(0);
@@ -543,7 +543,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rsold.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rsRatio.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rr.get(), sizeof(cl_mem) ) );
-        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, local_size1[0]*sizeof(float) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, 1024/*local_size1[0]*/*sizeof(float) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &tmpSize, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, tmpGlobalSize, NULL, local_size1 );
 
