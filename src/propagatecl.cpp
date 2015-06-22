@@ -112,11 +112,12 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
     // test new box
-    /*
+    //*
     auto d_ones = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_box_tmp = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     auto d_box_buffer = device_manager->AllocateMemory(CL_MEM_READ_WRITE, size*sizeof(float));
     float one = 1;
+    size_t lll[1] = {16};
 
     kernel = device_manager->GetKernel("vec.cl", "vecCopyConstant");
     arg_and_sizes.resize(0);
@@ -126,22 +127,12 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
     startT();
+        startT(2);
     for( int i = 0; i < 100; ++i ){
     kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
     arg_and_sizes.resize(0);
     arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( d_ones.get(), sizeof(cl_mem) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( d_box_buffer.get(), sizeof(cl_mem) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
-    device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
-
-    kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
-    arg_and_sizes.resize(0);
-    arg_and_sizes.push_back( pair<const void*, size_t>( d_ones.get(), sizeof(cl_mem) ) );
-    arg_and_sizes.push_back( pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) ) );
+    arg_and_sizes.push_back( pair<const void*, size_t>( d_image.get(), sizeof(cl_mem) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( d_box_buffer.get(), sizeof(cl_mem) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &width, sizeof(int) ) );
     arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
@@ -149,9 +140,22 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
     device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, local_size1 );
     }
+    endT(2);
+    startT(3);
+    for( int i = 0; i < 100; ++i ){
+    kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
+    arg_and_sizes[0] = pair<const void*, size_t>( d_ones.get(), sizeof(cl_mem) );
+    arg_and_sizes[1] = pair<const void*, size_t>( d_box_tmp.get(), sizeof(cl_mem) );
+    device_manager->Call( kernel, arg_and_sizes, 1, local_size1, NULL, lll );
+    }
+    endT(3);
     endT();
     cout << "new ";
     printT();
+    cout << "Y ";
+    printT(2);
+    cout << "X ";
+    printT(3);
     resetT();
     startT(1);
     for( int i = 0; i < 100; ++i){
@@ -167,7 +171,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
     endT(1);
     cout << "old ";
     printT(1);
-    */
+    //*/
 
     kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
     arg_and_sizes.resize(0);
