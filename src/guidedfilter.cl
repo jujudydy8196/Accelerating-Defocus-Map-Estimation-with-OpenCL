@@ -52,6 +52,19 @@ __kernel void boxfilter(
     result[gy*width+gx] = sum / count;
 }
 
+/*__kernel void boxfilter3(
+    __global float *result,
+    __global const float *image,
+    __global float *cumulate, // buffer
+    const int width,
+    const int height,
+    const int size,
+    const int r
+)
+{
+    boxfilterCumulateY( result, image, ca )
+}*/
+
 __kernel void boxfilterCumulateY(
     __global float *result,
     __global const float *image,
@@ -62,10 +75,10 @@ __kernel void boxfilterCumulateY(
     const int r
 )
 {
-    size_t id = get_global_id(0);
+    size_t id = get_global_id(0); // x
 
     if( id < width ){
-        int sum = image[id];
+        float sum = image[id];
         cumulate[id] = sum;
 
         for( int index = width + id; index < size; index += width ){
@@ -102,10 +115,81 @@ __kernel void boxfilterCumulateX(
 
     if( id < height ){
         int beginX = id * width;
+        float sum = image[beginX];
+        cumulate[beginX] = sum;
+
+        for( int index = beginX+1; index < beginX+width; ++index ){
+            sum += image[index];
+            cumulate[index] = sum;
+        }
+
+        for( int x = beginX; x <= beginX + r; ++x ){
+            result[x] = cumulate[x+r];
+        }
+        for( int x = beginX+r+1; x < beginX + width - r; ++x ){
+            result[x] = cumulate[x+r] - cumulate[x-r-1];
+        }
+        float tmp = cumulate[beginX+width-1];
+        for( int x = beginX + width - r; x < beginX + width; ++x ){
+            result[x] = tmp - cumulate[x-r-1];
+        }
+    }
+}
+
+__kernel void boxfilterCumulateY2(
+    __global float *result,
+    __global const float *image,
+    __local float *cumulate, // buffer 
+    const int width,
+    const int height,
+    const int size,
+    const int r
+)
+{
+    size_t id = get_global_id(0); // x
+
+    if( id < width ){
+        int sum = image[id];
+        cumulate[id] = sum;
+
+        for( int index = width + id; index < size; index += width ){
+            sum += image[index];
+            cumulate[index] = sum;
+        }
+
+        int delta = r*width;
+        int index = id;
+        for( int y = 0; y <= r; index += width, ++y ){
+            result[index] = cumulate[index+delta];
+        }
+        for( int y = r + 1; y < height - r; index += width, ++y ){
+            result[index] = cumulate[index+delta] - cumulate[index-delta-width];
+        }
+        float tmp = cumulate[(height-1)*width+id];
+        for( int y = height - r; y < height; index += width, ++y ){
+            result[index] = tmp - cumulate[index-delta-width];
+        }
+    }
+}
+
+__kernel void boxfilterCumulateX2(
+    __global float *result,
+    __global const float *image,
+    __global float *cumulate, // buffer
+    const int width,
+    const int height,
+    const int size,
+    const int r
+)
+{
+    size_t id = get_global_id(0);
+
+    if( id < height ){
+        int beginX = id * width;
         int sum = image[beginX];
         cumulate[beginX] = sum;
 
-        for( int index = beginX; index < beginX+width; ++index ){
+        for( int index = beginX+1; index < beginX+width; ++index ){
             sum += image[index];
             cumulate[index] = sum;
         }
@@ -213,6 +297,37 @@ __kernel void guidedFilterComputeAB(
         float cov_Ir_p = varRP[id] - meanR[id] * meanP[id];
         float cov_Ig_p = varGP[id] - meanG[id] * meanP[id];
         float cov_Ib_p = varBP[id] - meanB[id] * meanP[id];
+
+        a1[id] = cov_Ir_p*invSigma[9*id  ] + cov_Ig_p*invSigma[9*id+3] + cov_Ib_p*invSigma[9*id+6];
+        a2[id] = cov_Ir_p*invSigma[9*id+1] + cov_Ig_p*invSigma[9*id+4] + cov_Ib_p*invSigma[9*id+7];
+        a3[id] = cov_Ir_p*invSigma[9*id+2] + cov_Ig_p*invSigma[9*id+5] + cov_Ib_p*invSigma[9*id+8];
+
+        b[id] = meanP[id] - a1[id]*meanR[id] - a2[id]*meanG[id] - a3[id]*meanB[id];
+    }
+}
+
+__kernel void guidedFilterComputeAB2(
+    __global const float *meanR,
+    __global const float *meanG,
+    __global const float *meanB,
+    __global const float *meanP,
+    __global const float *varRP,
+    __global const float *varGP,
+    __global const float *varBP,
+    __global float *a1,
+    __global float *a2,
+    __global float *a3,
+    __global float *b,
+    __global const float* invSigma,
+    __global const float* N,
+    const int size
+)
+{
+    size_t id = get_global_id(0);
+    if( id < size ){
+        float cov_Ir_p = varRP[id] / N[id] - meanR[id] * meanP[id];
+        float cov_Ig_p = varGP[id] / N[id] - meanG[id] * meanP[id];
+        float cov_Ib_p = varBP[id] / N[id] - meanB[id] * meanP[id];
 
         a1[id] = cov_Ir_p*invSigma[9*id  ] + cov_Ig_p*invSigma[9*id+3] + cov_Ib_p*invSigma[9*id+6];
         a2[id] = cov_Ir_p*invSigma[9*id+1] + cov_Ig_p*invSigma[9*id+4] + cov_Ib_p*invSigma[9*id+7];

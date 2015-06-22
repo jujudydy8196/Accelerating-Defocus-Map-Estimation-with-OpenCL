@@ -19,6 +19,7 @@ vector<size_t> GetGroupSize(const cl_device_id did);
 vector<cl_uint> GetWorkItemDim(const cl_device_id did);
 vector<size_t> GetWorkItemSize(const cl_device_id did);
 vector<cl_uint> GetComputeUnits(const cl_device_id did);
+vector<char> GetKernelName(const cl_kernel kernel);
 
 typedef unique_ptr<cl_mem, void(*)(cl_mem*)> MemoryObject;
 
