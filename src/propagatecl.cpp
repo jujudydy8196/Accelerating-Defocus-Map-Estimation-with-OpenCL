@@ -331,7 +331,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         // LM->run(Lp, p.getPtr(), lambda);
         //    guided filter run
         //       boxfilter
-        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter3");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_meanP.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_p.get(), sizeof(cl_mem) ) );
@@ -339,6 +339,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
         // arg_and_sizes.push_back( pair<const void*, size_t>( &winNum, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, (local_size2[0]+2*radius)*(local_size2[1]+2*radius)*sizeof(float) ) );
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
 
         kernel = device_manager->GetKernel("vec.cl", "vecMultiply");
@@ -357,7 +358,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes[1] = pair<const void*, size_t>( d_gf_B.get(), sizeof(cl_mem) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
-        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter3");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_rp.get(), sizeof(cl_mem) ) );
@@ -365,6 +366,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
         // arg_and_sizes.push_back( pair<const void*, size_t>( &winNum, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, (local_size2[0]+2*radius)*(local_size2[1]+2*radius)*sizeof(float) ) );
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
 
         arg_and_sizes[0] = pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) );
@@ -392,7 +394,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &size, sizeof(int) ) );
         device_manager->Call( kernel, arg_and_sizes, 1, global_size1, NULL, local_size1 );
 
-        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter");
+        kernel = device_manager->GetKernel("guidedfilter.cl", "boxfilter3");
         arg_and_sizes.resize(0);
         arg_and_sizes.push_back( pair<const void*, size_t>( d_varRP.get(), sizeof(cl_mem) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( d_a1.get(), sizeof(cl_mem) ) );
@@ -400,6 +402,7 @@ void propagatecl( const float* image, const float* estimatedBlur, const size_t w
         arg_and_sizes.push_back( pair<const void*, size_t>( &height, sizeof(int) ) );
         arg_and_sizes.push_back( pair<const void*, size_t>( &radius, sizeof(int) ) );
         // arg_and_sizes.push_back( pair<const void*, size_t>( &winNum, sizeof(int) ) );
+        arg_and_sizes.push_back( pair<const void*, size_t>( NULL, (local_size2[0]+2*radius)*(local_size2[1]+2*radius)*sizeof(float) ) );
         device_manager->Call( kernel, arg_and_sizes, 2, global_size2, NULL, local_size2 );
 
         arg_and_sizes[0] = pair<const void*, size_t>( d_varGP.get(), sizeof(cl_mem) );
@@ -1198,6 +1201,7 @@ void loadKernels()
 
     device_manager->GetKernel("guidedfilter.cl", "boxfilter");
     device_manager->GetKernel("guidedfilter.cl", "boxfilter2");
+    device_manager->GetKernel("guidedfilter.cl", "boxfilter3");
     device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateX");
     device_manager->GetKernel("guidedfilter.cl", "boxfilterCumulateY");
     device_manager->GetKernel("guidedfilter.cl", "guidedFilterRGB");

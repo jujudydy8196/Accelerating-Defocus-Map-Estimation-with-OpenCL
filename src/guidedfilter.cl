@@ -52,18 +52,54 @@ __kernel void boxfilter(
     result[gy*width+gx] = sum / count;
 }
 
-/*__kernel void boxfilter3(
+__kernel void boxfilter3(
     __global float *result,
     __global const float *image,
-    __global float *cumulate, // buffer
     const int width,
     const int height,
-    const int size,
-    const int r
+    const int r,
+    __local float *local_image
 )
 {
-    boxfilterCumulateY( result, image, ca )
-}*/
+    size_t gx = get_global_id(0);
+    size_t gy = get_global_id(1);
+    size_t lx = get_local_id(0);
+    size_t ly = get_local_id(1);
+    size_t lw = get_local_size(0);
+    size_t lh = get_local_size(1);
+    size_t ww = 2 * r + lw;
+    size_t wh = 2 * r + lh;
+
+    for( int y = ly; y < wh; y += lh ){
+        int tmpY = gy+y-r;
+        for( int x = lx; x < ww; x += lw ){
+            int tmpX = gx+x-r;
+            if( tmpY < 0 || tmpY >= height || tmpX < 0 || tmpX >= width )
+                local_image[y*ww+x] = 0;
+            else local_image[y*ww+x] = image[tmpY*width+tmpX];
+        }
+    }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+
+    if( gx >= width || gy >= height ) return;
+
+    float sum = 0;
+    size_t count = 0;
+
+    for( int dy = -r; dy <= r; ++dy ){
+        int y = gy + dy;
+        if( y < 0 || y >= height ) continue;
+        for( int dx = -r; dx <= r; ++dx ){
+            int x = gx + dx;
+            if( x < 0 || x >= width ) continue;
+            sum += local_image[(dy+ly+r)*ww+dx+lx+r];
+            ++count;
+        }
+    }
+    result[gy*width+gx] = sum / count;
+}
 
 __kernel void boxfilterCumulateY(
     __global float *result,
