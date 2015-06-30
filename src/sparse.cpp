@@ -59,14 +59,14 @@ int main(int argc, char** argv) {
 		//cvtColor(I_cv,I_gray_cv,CV_BGR2GRAY);
 		//
 
-		//start = clock();
-		//canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
-		//stop = clock();
+		start = clock();
+		canny(I_gray, height, width, 1, 0.5, 0.8, &I_edge, "test");
+		stop = clock();
 
-		//imageFloat2Uchar(I_edge,I_edge_uchar,numPixel);
+		imageFloat2Uchar(I_edge,I_edge_uchar,numPixel);
 		
-		//cout << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
-		//timelog << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
+		cout << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
+		timelog << "canny detection time: " << double(stop - start) / CLOCKS_PER_SEC << endl;
 
 		//for (int i=0; i<numPixel; i++)
 				//if (I_edge[i]!=0) cout << I_edge[i] << " " ;
@@ -87,8 +87,8 @@ int main(int argc, char** argv) {
     //Canny(I_gray_cv,I_edge_cv,0.5,0.8);
 		//imwrite("edge_cv.pgm",I_edge_cv);
 
-		readPGM(I_edge_uchar, argv[1]);
-		imageUchar2Float( I_edge_uchar, I_edge, numPixel );
+		//readPGM(I_edge_uchar, argv[1]);
+		//imageUchar2Float( I_edge_uchar, I_edge, numPixel );
 
 		start = clock();
     defocusEstimation(I_ori,I_gray, I_edge, I_sparse, 1.0, 0.001, 3, width, height,atoi(argv[2])) ;

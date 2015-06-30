@@ -43,11 +43,15 @@ else
 fi
 
 echo "blur map result"
-./blurmap/testimg ../ImageData/$1/input.ppm check_result.pgm
+./dof ../ImageData/$1/input.ppm check_result.pgm
 
+echo "matting"
+./matting ../ImageData/$1/input.ppm check_result.pgm
 
 mv sparse.pgm ../ImageData/$1/
 mv check_result.pgm ../ImageData/$1/
 mv time.txt ../ImageData/$1/
-mv ./blurredImage.pgm ../ImageData/$1/
+mv ./blurredImage.ppm ../ImageData/$1/
+mv background.pgm ../ImageData/$1/
+mv frontground.ppm ../ImageData/$1/
 

@@ -1,10 +1,13 @@
 CXX=g++
-EXES=sparse propagate defocus_map test_vec cl_test dof
+EXES=sparse propagate defocus_map test_vec cl_test dof matting
 
 CFLAGS=-Wall -c -O2 -std=c++11 
 LFLAGS=-lOpenCL -lglog -lgflags
 
 all: $(EXES)
+
+matting: matting.o fileIO.o
+	$(CXX) $^ $(LFLAGS) -o $@
 
 
 sparse: sparse.o fileIO.o edge.o defocus.o guidedfilter.o
@@ -26,6 +29,9 @@ dof: testimg.o fileIO.o
 	$(CXX) $^ $(LFLAGS) -o $@
 
 %.o: %.cpp %.h
+	$(CXX) $(CFLAGS) $< -o $@
+
+matting.o: matting.cpp fileIO.h
 	$(CXX) $(CFLAGS) $< -o $@
 
 defocus_map.o: defocus_map.cpp propagate.h vec.h
